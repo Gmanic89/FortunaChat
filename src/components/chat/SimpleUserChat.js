@@ -194,7 +194,7 @@ const SimpleUserChat = ({
         <Chat client={chatClient} theme="str-chat__theme-light">
             <div style={containerStyle}>
                 <div style={mainContainerStyle}>
-                    {/* Header personalizado para usuarios - FIJO */}
+                    {/* Header personalizado para usuarios - SIEMPRE FIJO ARRIBA */}
                     <div style={{
                         background: 'white',
                         borderBottom: '1px solid #e5e7eb',
@@ -202,9 +202,13 @@ const SimpleUserChat = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        position: 'sticky',
+                        position: 'fixed',
                         top: 0,
-                        zIndex: 20
+                        left: 0,
+                        right: 0,
+                        zIndex: 1000,
+                        height: isMobile ? '70px' : '80px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1rem' }}>
                             <button
@@ -284,197 +288,213 @@ const SimpleUserChat = ({
                         </div>
                     </div>
 
-                    {/* Botón SINOCA - FLOTANTE Y FINO */}
+                    {/* Área de chat - TODA LA PANTALLA ENTRE HEADER E INPUT */}
                     <div style={{
-                        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem', // Padding más fino
-                        background: 'transparent', // Fondo transparente para flotar
-                        borderBottom: 'none', // Sin borde
-                        position: 'sticky',
-                        top: isMobile ? '120px' : '100px', // Ajustado para nuevo tamaño
-                        zIndex: 15
-                    }}>
-                        <button
-                            onClick={handleSinocaClick}
-                            style={sinocaButtonStyle}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-3px) scale(1.03)';
-                                e.target.style.boxShadow = '0 15px 35px -5px rgba(99, 102, 241, 0.6), 0 8px 15px -4px rgba(99, 102, 241, 0.2)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = 'translateY(0) scale(1)';
-                                e.target.style.boxShadow = '0 8px 20px -4px rgba(99, 102, 241, 0.4), 0 4px 8px -2px rgba(99, 102, 241, 0.1)';
-                            }}
-                            onMouseDown={(e) => {
-                                e.target.style.transform = 'translateY(-1px) scale(0.98)';
-                            }}
-                            onMouseUp={(e) => {
-                                e.target.style.transform = 'translateY(-3px) scale(1.03)';
-                            }}
-                        >
-                            {/* Efecto de brillo mejorado */}
-                            <div style={{
-                                position: 'absolute',
-                                top: '0',
-                                left: '-100%',
-                                width: '100%',
-                                height: '100%',
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                                animation: 'shine 4s infinite',
-                                pointerEvents: 'none'
-                            }} />
-
-                            {/* Contenido del botón más compacto */}
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                position: 'relative',
-                                zIndex: 1
-                            }}>
-                                <Globe style={{
-                                    width: isMobile ? '1.125rem' : '1.25rem', // Íconos más pequeños
-                                    height: isMobile ? '1.125rem' : '1.25rem',
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                }} />
-                                <span style={{
-                                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                                }}>
-                                    Ingresar al SINOCA
-                                </span>
-                                <ExternalLink style={{
-                                    width: isMobile ? '0.875rem' : '1rem', // Ícono de enlace más pequeño
-                                    height: isMobile ? '0.875rem' : '1rem',
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                }} />
-                            </div>
-                        </button>
-                    </div>
-
-                    {/* Área de chat con scroll independiente */}
-                    <div style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
+                        position: 'fixed',
+                        top: isMobile ? '70px' : '80px',
+                        left: 0,
+                        right: 0,
+                        bottom: isMobile ? '140px' : '130px', // Espacio para respuestas rápidas + input
                         overflow: 'hidden',
-                        height: isMobile
-                            ? 'calc(100vh - 280px)' // Altura ajustada para botón más fino
-                            : 'calc(100vh - 240px)'
+                        background: '#f8fafc'
                     }}>
                         <Channel channel={channel}>
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                height: '100%'
+                                height: '100%',
+                                position: 'relative'
                             }}>
-                                {/* Lista de mensajes - SOLO ESTA PARTE HACE SCROLL */}
+                                {/* Lista de mensajes - TODA EL ÁREA CON SCROLL */}
                                 <div style={{
                                     flex: 1,
                                     overflow: 'auto',
                                     padding: '1rem',
+                                    paddingTop: '80px', // Espacio para el botón SINOCA flotante
                                     background: '#f8fafc'
                                 }}>
                                     <MessageList />
                                 </div>
 
-                                {/* MENSAJES SUGERIDOS - FIJO ENCIMA DEL INPUT */}
+                                {/* Botón SINOCA - FLOTANTE SOBRE LA CONVERSACIÓN */}
                                 <div style={{
-                                    padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-                                    background: '#f8fafc',
-                                    borderTop: '1px solid #e5e7eb',
-                                    position: 'sticky',
-                                    bottom: isMobile ? '90px' : '70px', // Encima del input
-                                    zIndex: 10
+                                    position: 'absolute',
+                                    top: '20px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 100,
+                                    width: isMobile ? 'calc(100% - 2rem)' : '400px',
+                                    maxWidth: '400px'
                                 }}>
-                                    <div style={{
-                                        fontSize: isMobile ? '0.7rem' : '0.875rem',
-                                        color: '#6b7280',
-                                        marginBottom: isMobile ? '0.5rem' : '0.75rem',
-                                        fontWeight: '500',
-                                        textAlign: 'center'
-                                    }}>
-                                        💬 Respuestas rápidas
-                                    </div>
-                                    <div style={suggestedMessagesGridStyle}>
-                                        {suggestedMessages.map((msg) => {
-                                            const IconComponent = msg.icon;
-                                            return (
-                                                <button
-                                                    key={msg.id}
-                                                    onClick={() => handleSuggestedMessageClick(msg.text)}
-                                                    style={getSuggestedMessageStyle(msg.color, msg.width)}
-                                                    onMouseEnter={(e) => {
-                                                        e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                                                        e.target.style.boxShadow = `0 6px 12px -2px ${msg.color}30`;
-                                                        e.target.style.borderColor = `${msg.color}60`;
-                                                        e.target.style.background = `${msg.color}05`;
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.target.style.transform = 'translateY(0) scale(1)';
-                                                        e.target.style.boxShadow = '0 2px 4px -1px rgba(0, 0, 0, 0.1)';
-                                                        e.target.style.borderColor = `${msg.color}20`;
-                                                        e.target.style.background = 'white';
-                                                    }}
-                                                    onTouchStart={(e) => {
-                                                        e.target.style.transform = 'scale(0.95)';
-                                                        e.target.style.background = `${msg.color}10`;
-                                                    }}
-                                                    onTouchEnd={(e) => {
-                                                        e.target.style.transform = 'scale(1)';
-                                                        e.target.style.background = 'white';
-                                                    }}
-                                                >
-                                                    {/* Efecto de ripple en click */}
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        bottom: 0,
-                                                        background: `linear-gradient(45deg, ${msg.color}10, transparent)`,
-                                                        opacity: 0,
-                                                        borderRadius: 'inherit',
-                                                        pointerEvents: 'none'
-                                                    }} />
+                                    <button
+                                        onClick={handleSinocaClick}
+                                        style={{
+                                            ...sinocaButtonStyle,
+                                            width: '100%',
+                                            boxShadow: '0 8px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.1)',
+                                            backdropFilter: 'blur(12px)',
+                                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 50%, rgba(236, 72, 153, 0.95) 100%)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.transform = 'translateY(-3px) scale(1.03)';
+                                            e.target.style.boxShadow = '0 15px 35px -5px rgba(99, 102, 241, 0.6), 0 8px 15px -4px rgba(99, 102, 241, 0.2)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.transform = 'translateY(0) scale(1)';
+                                            e.target.style.boxShadow = '0 8px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.1)';
+                                        }}
+                                        onMouseDown={(e) => {
+                                            e.target.style.transform = 'translateY(-1px) scale(0.98)';
+                                        }}
+                                        onMouseUp={(e) => {
+                                            e.target.style.transform = 'translateY(-3px) scale(1.03)';
+                                        }}
+                                    >
+                                        {/* Efecto de brillo mejorado */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '0',
+                                            left: '-100%',
+                                            width: '100%',
+                                            height: '100%',
+                                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                            animation: 'shine 4s infinite',
+                                            pointerEvents: 'none'
+                                        }} />
 
-                                                    <IconComponent
-                                                        style={{
-                                                            width: isMobile ? '1.25rem' : '1.25rem',
-                                                            height: isMobile ? '1.25rem' : '1.25rem',
-                                                            color: msg.color,
-                                                            flexShrink: 0,
-                                                            filter: `drop-shadow(0 1px 2px ${msg.color}40)`
-                                                        }}
-                                                    />
-                                                    <span style={{
-                                                        flex: isMobile ? 'unset' : 1,
-                                                        lineHeight: isMobile ? '1.2' : '1.4',
-                                                        fontSize: isMobile ? (msg.width === '70%' ? '0.65rem' : '0.6rem') : '0.875rem',
-                                                        fontWeight: isMobile ? '700' : '600'
-                                                    }}>
-                                                        {isMobile ? msg.shortText : msg.text}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* Input de mensaje - COMPLETAMENTE FIJO EN LA PARTE INFERIOR */}
-                                <div style={{
-                                    borderTop: '1px solid #e5e7eb',
-                                    background: 'white',
-                                    paddingBottom: isMobile ? '1rem' : '0.5rem',
-                                    paddingTop: '0.5rem',
-                                    position: 'sticky',
-                                    bottom: 0,
-                                    zIndex: 20
-                                }}>
-                                    <MessageInput
-                                        placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
-                                    />
+                                        {/* Contenido del botón */}
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            position: 'relative',
+                                            zIndex: 1
+                                        }}>
+                                            <Globe style={{
+                                                width: isMobile ? '1.125rem' : '1.25rem',
+                                                height: isMobile ? '1.125rem' : '1.25rem',
+                                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                            }} />
+                                            <span style={{
+                                                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                            }}>
+                                                Ingresar al SINOCA
+                                            </span>
+                                            <ExternalLink style={{
+                                                width: isMobile ? '0.875rem' : '1rem',
+                                                height: isMobile ? '0.875rem' : '1rem',
+                                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                                            }} />
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
                         </Channel>
+                    </div>
+
+                    {/* RESPUESTAS RÁPIDAS + INPUT - SIEMPRE FIJO ABAJO */}
+                    <div style={{
+                        position: 'fixed',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: 'white',
+                        borderTop: '1px solid #e5e7eb',
+                        zIndex: 1000,
+                        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                        {/* MENSAJES SUGERIDOS - FIJO ENCIMA DEL INPUT */}
+                        <div style={{
+                            padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
+                            background: '#f8fafc',
+                            borderBottom: '1px solid #e5e7eb'
+                        }}>
+                            <div style={{
+                                fontSize: isMobile ? '0.7rem' : '0.875rem',
+                                color: '#6b7280',
+                                marginBottom: isMobile ? '0.5rem' : '0.75rem',
+                                fontWeight: '500',
+                                textAlign: 'center'
+                            }}>
+                                💬 Respuestas rápidas
+                            </div>
+                            <div style={suggestedMessagesGridStyle}>
+                                {suggestedMessages.map((msg) => {
+                                    const IconComponent = msg.icon;
+                                    return (
+                                        <button
+                                            key={msg.id}
+                                            onClick={() => handleSuggestedMessageClick(msg.text)}
+                                            style={getSuggestedMessageStyle(msg.color, msg.width)}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                                                e.target.style.boxShadow = `0 6px 12px -2px ${msg.color}30`;
+                                                e.target.style.borderColor = `${msg.color}60`;
+                                                e.target.style.background = `${msg.color}05`;
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'translateY(0) scale(1)';
+                                                e.target.style.boxShadow = '0 2px 4px -1px rgba(0, 0, 0, 0.1)';
+                                                e.target.style.borderColor = `${msg.color}20`;
+                                                e.target.style.background = 'white';
+                                            }}
+                                            onTouchStart={(e) => {
+                                                e.target.style.transform = 'scale(0.95)';
+                                                e.target.style.background = `${msg.color}10`;
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                e.target.style.transform = 'scale(1)';
+                                                e.target.style.background = 'white';
+                                            }}
+                                        >
+                                            {/* Efecto de ripple en click */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                background: `linear-gradient(45deg, ${msg.color}10, transparent)`,
+                                                opacity: 0,
+                                                borderRadius: 'inherit',
+                                                pointerEvents: 'none'
+                                            }} />
+
+                                            <IconComponent
+                                                style={{
+                                                    width: isMobile ? '1.25rem' : '1.25rem',
+                                                    height: isMobile ? '1.25rem' : '1.25rem',
+                                                    color: msg.color,
+                                                    flexShrink: 0,
+                                                    filter: `drop-shadow(0 1px 2px ${msg.color}40)`
+                                                }}
+                                            />
+                                            <span style={{
+                                                flex: isMobile ? 'unset' : 1,
+                                                lineHeight: isMobile ? '1.2' : '1.4',
+                                                fontSize: isMobile ? (msg.width === '70%' ? '0.65rem' : '0.6rem') : '0.875rem',
+                                                fontWeight: isMobile ? '700' : '600'
+                                            }}>
+                                                {isMobile ? msg.shortText : msg.text}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Input de mensaje - COMPLETAMENTE FIJO EN LA PARTE INFERIOR */}
+                        <div style={{
+                            background: 'white',
+                            paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 1rem)' : '0.5rem',
+                            paddingTop: '0.5rem',
+                            paddingLeft: '1rem',
+                            paddingRight: '1rem'
+                        }}>
+                            <MessageInput
+                                placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -486,6 +506,18 @@ const SimpleUserChat = ({
             0% { left: -100%; }
             50% { left: 100%; }
             100% { left: 100%; }
+          }
+          
+          /* Asegurar que no hay scroll horizontal */
+          body, html {
+            overflow-x: hidden;
+          }
+          
+          /* Optimización para móvil */
+          @media (max-width: 768px) {
+            * {
+              -webkit-tap-highlight-color: transparent;
+            }
           }
         `}
             </style>
