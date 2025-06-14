@@ -78,15 +78,23 @@ export const useStreamChat = (currentUser) => {
                 user.token
             );
 
-            // Crear/obtener canal general
-            console.log('Creando canal general');
-            const generalChannel = client.channel('messaging', 'general', {
-                name: 'General',
+            // Crear/obtener canal personal (más simple)
+            console.log('Creando canal personal');
+            const personalChannelId = `personal-${user.username}`;
+            const personalChannel = client.channel('messaging', personalChannelId, {
+                name: `Chat de ${user.username}`,
                 members: [user.username],
             });
 
-            await generalChannel.create();
-            setChannel(generalChannel);
+            try {
+                await personalChannel.watch();
+                setChannel(personalChannel);
+                console.log('✅ Canal personal creado exitosamente');
+            } catch (error) {
+                console.log('Canal ya existe, obteniendo...');
+                await personalChannel.query();
+                setChannel(personalChannel);
+            }
 
             console.log('✅ Usuario conectado exitosamente a Stream Chat:', user.username);
         } catch (error) {

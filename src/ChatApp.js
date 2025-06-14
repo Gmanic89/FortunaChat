@@ -37,6 +37,23 @@ const ChatApp = () => {
     switchChannel,
   } = useStreamChat(currentUser);
 
+  // Conectar automáticamente cuando currentUser cambia (desde localStorage o login)
+  React.useEffect(() => {
+    const autoConnect = async () => {
+      if (currentUser && currentUser.token && !channel && !isConnecting) {
+        console.log('🔄 Auto-conectando usuario desde useEffect:', currentUser.username);
+        try {
+          await connectUser(currentUser);
+          console.log('✅ Auto-conexión exitosa');
+        } catch (error) {
+          console.error('❌ Error en auto-conexión:', error);
+        }
+      }
+    };
+
+    autoConnect();
+  }, [currentUser, channel, isConnecting, connectUser]);
+
   // Debug: logs de estado
   console.log('🔄 ChatApp render:', {
     isAuthenticated,
@@ -46,8 +63,6 @@ const ChatApp = () => {
     isConnecting,
     authLoading,
   });
-
-  // Handlers de autenticación
   const handleRegister = async (userData) => {
     try {
       console.log('📝 Iniciando registro:', userData.username);
