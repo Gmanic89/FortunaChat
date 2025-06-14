@@ -127,27 +127,30 @@ const SimpleUserChat = ({
         zIndex: 10
     };
 
-    // Botón SINOCA moderno
+    // Botón SINOCA moderno - MÁS FINO Y FLOTANTE
     const sinocaButtonStyle = {
         width: '100%',
-        padding: isMobile ? '1rem 1.5rem' : '1.25rem 2rem',
+        padding: isMobile ? '0.75rem 1.25rem' : '1rem 1.75rem', // Más fino
         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
         border: 'none',
-        borderRadius: '1rem',
+        borderRadius: '0.75rem', // Bordes más suaves
         color: 'white',
-        fontSize: isMobile ? '0.9rem' : '1.1rem',
+        fontSize: isMobile ? '0.85rem' : '1rem', // Texto más pequeño
         fontWeight: '700',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.75rem',
+        gap: '0.5rem', // Gap más pequeño
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4), 0 8px 10px -6px rgba(99, 102, 241, 0.1)',
+        boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.4), 0 4px 8px -2px rgba(99, 102, 241, 0.1)',
         position: 'relative',
         overflow: 'hidden',
         textTransform: 'uppercase',
-        letterSpacing: '0.5px'
+        letterSpacing: '0.3px', // Menos espaciado
+        backdropFilter: 'blur(10px)', // Efecto glass
+        maxWidth: isMobile ? '100%' : '400px', // Ancho máximo más pequeño
+        margin: '0 auto' // Centrado
     };
 
     // Estilos para mensajes sugeridos
@@ -191,14 +194,17 @@ const SimpleUserChat = ({
         <Chat client={chatClient} theme="str-chat__theme-light">
             <div style={containerStyle}>
                 <div style={mainContainerStyle}>
-                    {/* Header personalizado para usuarios */}
+                    {/* Header personalizado para usuarios - FIJO */}
                     <div style={{
                         background: 'white',
                         borderBottom: '1px solid #e5e7eb',
                         padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between'
+                        justifyContent: 'space-between',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 20
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1rem' }}>
                             <button
@@ -278,85 +284,107 @@ const SimpleUserChat = ({
                         </div>
                     </div>
 
-                    {/* Botón SINOCA - ARRIBA Y MODERNO */}
+                    {/* Botón SINOCA - FLOTANTE Y FINO */}
                     <div style={{
-                        padding: isMobile ? '1.25rem 1rem' : '1.5rem',
-                        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                        borderBottom: '1px solid #e5e7eb'
+                        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem', // Padding más fino
+                        background: 'transparent', // Fondo transparente para flotar
+                        borderBottom: 'none', // Sin borde
+                        position: 'sticky',
+                        top: isMobile ? '120px' : '100px', // Ajustado para nuevo tamaño
+                        zIndex: 15
                     }}>
                         <button
                             onClick={handleSinocaClick}
                             style={sinocaButtonStyle}
                             onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                                e.target.style.boxShadow = '0 20px 40px -10px rgba(99, 102, 241, 0.5), 0 10px 15px -8px rgba(99, 102, 241, 0.2)';
+                                e.target.style.transform = 'translateY(-3px) scale(1.03)';
+                                e.target.style.boxShadow = '0 15px 35px -5px rgba(99, 102, 241, 0.6), 0 8px 15px -4px rgba(99, 102, 241, 0.2)';
                             }}
                             onMouseLeave={(e) => {
                                 e.target.style.transform = 'translateY(0) scale(1)';
-                                e.target.style.boxShadow = '0 10px 25px -5px rgba(99, 102, 241, 0.4), 0 8px 10px -6px rgba(99, 102, 241, 0.1)';
+                                e.target.style.boxShadow = '0 8px 20px -4px rgba(99, 102, 241, 0.4), 0 4px 8px -2px rgba(99, 102, 241, 0.1)';
                             }}
                             onMouseDown={(e) => {
-                                e.target.style.transform = 'translateY(0) scale(0.98)';
+                                e.target.style.transform = 'translateY(-1px) scale(0.98)';
                             }}
                             onMouseUp={(e) => {
-                                e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                                e.target.style.transform = 'translateY(-3px) scale(1.03)';
                             }}
                         >
-                            {/* Efecto de brillo */}
+                            {/* Efecto de brillo mejorado */}
                             <div style={{
                                 position: 'absolute',
                                 top: '0',
                                 left: '-100%',
                                 width: '100%',
                                 height: '100%',
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                                animation: 'shine 3s infinite',
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                animation: 'shine 4s infinite',
                                 pointerEvents: 'none'
                             }} />
 
-                            {/* Contenido del botón */}
+                            {/* Contenido del botón más compacto */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.75rem',
+                                gap: '0.5rem',
                                 position: 'relative',
                                 zIndex: 1
                             }}>
                                 <Globe style={{
-                                    width: isMobile ? '1.25rem' : '1.5rem',
-                                    height: isMobile ? '1.25rem' : '1.5rem',
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                                    width: isMobile ? '1.125rem' : '1.25rem', // Íconos más pequeños
+                                    height: isMobile ? '1.125rem' : '1.25rem',
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
                                 }} />
                                 <span style={{
-                                    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                                 }}>
                                     Ingresar al SINOCA
                                 </span>
                                 <ExternalLink style={{
-                                    width: isMobile ? '1rem' : '1.25rem',
-                                    height: isMobile ? '1rem' : '1.25rem',
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                                    width: isMobile ? '0.875rem' : '1rem', // Ícono de enlace más pequeño
+                                    height: isMobile ? '0.875rem' : '1rem',
+                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
                                 }} />
                             </div>
                         </button>
                     </div>
 
-                    {/* Área de chat SIN SIDEBAR - Optimizada */}
-                    <div style={chatAreaStyle}>
+                    {/* Área de chat con scroll independiente */}
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        height: isMobile
+                            ? 'calc(100vh - 280px)' // Altura ajustada para botón más fino
+                            : 'calc(100vh - 240px)'
+                    }}>
                         <Channel channel={channel}>
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                height: '100%',
-                                position: 'relative'
+                                height: '100%'
                             }}>
-                                {/* Lista de mensajes con scroll independiente */}
-                                <div style={messageListStyle}>
+                                {/* Lista de mensajes - SOLO ESTA PARTE HACE SCROLL */}
+                                <div style={{
+                                    flex: 1,
+                                    overflow: 'auto',
+                                    padding: '1rem',
+                                    background: '#f8fafc'
+                                }}>
                                     <MessageList />
                                 </div>
 
-                                {/* MENSAJES SUGERIDOS - SOLO 2 OPCIONES CON ANCHO PERSONALIZADO */}
-                                <div style={suggestedMessagesContainerStyle}>
+                                {/* MENSAJES SUGERIDOS - FIJO ENCIMA DEL INPUT */}
+                                <div style={{
+                                    padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
+                                    background: '#f8fafc',
+                                    borderTop: '1px solid #e5e7eb',
+                                    position: 'sticky',
+                                    bottom: isMobile ? '90px' : '70px', // Encima del input
+                                    zIndex: 10
+                                }}>
                                     <div style={{
                                         fontSize: isMobile ? '0.7rem' : '0.875rem',
                                         color: '#6b7280',
@@ -431,8 +459,16 @@ const SimpleUserChat = ({
                                     </div>
                                 </div>
 
-                                {/* Input de mensaje - Siempre visible */}
-                                <div style={inputContainerStyle}>
+                                {/* Input de mensaje - COMPLETAMENTE FIJO EN LA PARTE INFERIOR */}
+                                <div style={{
+                                    borderTop: '1px solid #e5e7eb',
+                                    background: 'white',
+                                    paddingBottom: isMobile ? '1rem' : '0.5rem',
+                                    paddingTop: '0.5rem',
+                                    position: 'sticky',
+                                    bottom: 0,
+                                    zIndex: 20
+                                }}>
                                     <MessageInput
                                         placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
                                     />
