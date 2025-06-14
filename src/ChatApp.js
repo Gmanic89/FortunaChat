@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StreamChat } from 'stream-chat';
 import {
   Chat,
@@ -14,9 +14,9 @@ import {
 import { MessageCircle, User, Lock, LogOut, UserPlus } from 'lucide-react';
 
 import 'stream-chat-react/dist/css/v2/index.css';
-import './ModernChat.css'; // ← AGREGAR ESTA LÍNEA
+import './ModernChat.css';
 
-// Reemplaza con tu API Key real de Stream
+// Tu API Key de Stream
 const API_KEY = process.env.REACT_APP_STREAM_API_KEY || '7met7m5hgkb8ui';
 const chatClient = StreamChat.getInstance(API_KEY);
 
@@ -26,39 +26,81 @@ const ChatApp = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [registerData, setRegisterData] = useState({ username: '', password: '', confirmPassword: '' });
-  const messagesEndRef = useRef(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [channel, setChannel] = useState(null);
 
-  // Cargar datos del usuario al iniciar
+  // Cargar usuarios del localStorage
   useEffect(() => {
-    const savedUsers = JSON.parse(localStorage.getItem('chatUsers') || '[]');
-    const savedMessages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
-    const savedCurrentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const savedUsers = JSON.parse(localStorage.getItem('fortunaChatUsers') || '[]');
+    const savedCurrentUser = JSON.parse(localStorage.getItem('fortunaCurrentUser') || 'null');
     
     setUsers(savedUsers);
-    setMessages(savedMessages);
     
     if (savedCurrentUser) {
-      setCurrentUser(savedCurrentUser);
-      setShowLogin(false);
+      connectUserToStream(savedCurrentUser);
     }
   }, []);
 
-  // Auto scroll al final de los mensajes
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Conectar usuario a Stream Chat
+  const connectUserToStream = async (user) => {
+    try {
+      setIsConnecting(true);
+      
+      // Token de desarrollo (para producción necesitas backend)
+      const token = chatClient.devToken(user.username);
+      
+      await chatClient.connectUser(
+        {
+          id: user.username,
+          name: user.username,
+          image: `https://ui-avatars.com/api/?name=${user.username}&background=6366f1&color=fff`,
+        },
+        token
+      );
 
-  // Guardar datos en localStorage
+      // Crear o obtener el canal general
+      const generalChannel = chatClient.channel('messaging', 'general', {
+        name: 'Chat General - Fortuna',
+        members: [user.username],
+      });
+
+      await generalChannel.create();
+      setChannel(generalChannel);
+      setCurrentUser(user);
+      setShowLogin(false);
+      setIsConnecting(false);
+      
+      console.log('✅ Conectado a Stream Chat exitosamente');
+    } catch (error) {
+      console.error('❌ Error conectando a Stream:', error);
+      setIsConnecting(false);
+      alert('Error conectando al chat: ' + error.message);
+    }
+  };
+
+  // Desconectar usuario
+  const disconnectUser = async () => {
+    try {
+      await chatClient.disconnectUser();
+      setCurrentUser(null);
+      setChannel(null);
+      setShowLogin(true);
+      setShowChat(false);
+      localStorage.removeItem('fortunaCurrentUser');
+    } catch (error) {
+      console.error('Error desconectando:', error);
+    }
+  };
+
+  // Guardar en localStorage
   const saveToStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
   };
 
   // Manejar registro
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (registerData.password !== registerData.confirmPassword) {
       alert('Las contraseñas no coinciden');
       return;
@@ -66,6 +108,11 @@ const ChatApp = () => {
     
     if (users.find(user => user.username === registerData.username)) {
       alert('El usuario ya existe');
+      return;
+    }
+    
+    if (registerData.username.length < 3) {
+      alert('El nombre de usuario debe tener al menos 3 caracteres');
       return;
     }
     
@@ -78,61 +125,50 @@ const ChatApp = () => {
     
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
-    saveToStorage('chatUsers', updatedUsers);
+    saveToStorage('fortunaChatUsers', updatedUsers);
+    saveToStorage('fortunaCurrentUser', newUser);
     
-    alert('Usuario registrado exitosamente');
     setIsRegistering(false);
     setRegisterData({ username: '', password: '', confirmPassword: '' });
+    
+    // Conectar automáticamente después del registro
+    await connectUserToStream(newUser);
   };
 
   // Manejar login
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const user = users.find(u => 
       u.username === loginData.username && u.password === loginData.password
     );
     
     if (user) {
-      setCurrentUser(user);
-      saveToStorage('currentUser', user);
-      setShowLogin(false);
+      saveToStorage('fortunaCurrentUser', user);
       setLoginData({ username: '', password: '' });
+      await connectUserToStream(user);
     } else {
       alert('Usuario o contraseña incorrectos');
     }
   };
 
-  // Manejar logout
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setShowLogin(true);
-    setShowChat(false);
-    localStorage.removeItem('currentUser');
-  };
-
-  // Enviar mensaje
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message = {
-        id: Date.now(),
-        text: newMessage,
-        sender: currentUser.username,
-        timestamp: new Date().toISOString()
-      };
-      
-      const updatedMessages = [...messages, message];
-      setMessages(updatedMessages);
-      saveToStorage('chatMessages', updatedMessages);
-      setNewMessage('');
-    }
-  };
-
-  // Formatear fecha
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Pantalla de carga
+  if (isConnecting) {
+    return (
+      <div className="modern-login-container">
+        <div className="modern-login-card">
+          <div className="modern-login-header">
+            <div className="modern-app-icon">
+              <MessageCircle className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="modern-app-title">FortunaChat</h1>
+            <p className="modern-app-subtitle">Conectando a Stream Chat...</p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+            <LoadingIndicator size={60} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Pantalla de Login/Registro
   if (showLogin) {
@@ -143,10 +179,28 @@ const ChatApp = () => {
             <div className="modern-app-icon">
               <MessageCircle className="w-10 h-10 text-white" />
             </div>
-            <h1 className="modern-app-title">ModernChat</h1>
+            <h1 className="modern-app-title">FortunaChat</h1>
             <p className="modern-app-subtitle">
               {isRegistering ? 'Crear nueva cuenta' : 'Bienvenido de vuelta'}
             </p>
+            <div style={{ 
+              fontSize: '0.75rem', 
+              color: '#10b981', 
+              marginTop: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}>
+              <div style={{
+                width: '6px',
+                height: '6px',
+                backgroundColor: '#10b981',
+                borderRadius: '50%',
+                animation: 'pulse 2s infinite'
+              }}></div>
+              Powered by Stream Chat
+            </div>
           </div>
 
           {isRegistering ? (
@@ -162,6 +216,7 @@ const ChatApp = () => {
                     className="modern-input"
                     placeholder="Tu nombre de usuario"
                     required
+                    minLength={3}
                   />
                 </div>
               </div>
@@ -197,7 +252,6 @@ const ChatApp = () => {
               </div>
 
               <button
-                type="button"
                 onClick={handleRegister}
                 className="modern-btn-primary"
               >
@@ -206,7 +260,6 @@ const ChatApp = () => {
               </button>
 
               <button
-                type="button"
                 onClick={() => setIsRegistering(false)}
                 className="modern-btn-secondary"
               >
@@ -246,7 +299,6 @@ const ChatApp = () => {
               </div>
 
               <button
-                type="button"
                 onClick={handleLogin}
                 className="modern-btn-primary"
               >
@@ -254,7 +306,6 @@ const ChatApp = () => {
               </button>
 
               <button
-                type="button"
                 onClick={() => setIsRegistering(true)}
                 className="modern-btn-secondary"
               >
@@ -268,7 +319,7 @@ const ChatApp = () => {
   }
 
   // Pantalla principal con icono de chat
-  if (!showChat) {
+  if (!showChat && currentUser) {
     return (
       <div className="modern-main-screen">
         <div className="modern-main-content">
@@ -283,109 +334,122 @@ const ChatApp = () => {
           <h2 className="modern-welcome-title">
             ¡Hola, {currentUser.username}!
           </h2>
-          <p className="modern-welcome-subtitle">Haz clic en el icono para abrir ModernChat</p>
+          <p className="modern-welcome-subtitle">Haz clic en el icono para abrir FortunaChat</p>
           <div className="modern-status-indicator">
             <div className="modern-status-dot"></div>
-            Sistema conectado
+            Conectado a Stream Chat
           </div>
           <button
-            onClick={handleLogout}
+            onClick={disconnectUser}
             className="modern-logout-btn"
           >
             <LogOut className="w-4 h-4" />
-            Cerrar Sesión
+            Desconectar
           </button>
         </div>
       </div>
     );
   }
 
-  // Pantalla de chat
-  return (
-    <div className="modern-chat-container">
-      {/* Header del chat */}
-      <div className="modern-chat-header">
-        <div className="modern-chat-header-left">
-          <button
-            onClick={() => setShowChat(false)}
-            className="modern-header-btn"
-          >
-            <MessageCircle className="w-6 h-6" />
-          </button>
-          <h1 className="modern-chat-title">Chat Global</h1>
-        </div>
-        <div className="modern-chat-header-right">
-          <span className="modern-chat-user-info">
-            Conectado como {currentUser.username}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="modern-logout-btn"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Área de mensajes */}
-      <div className="modern-messages-area">
-        {messages.length === 0 ? (
-          <div className="modern-empty-state">
-            <MessageCircle className="modern-empty-icon" />
-            <p>No hay mensajes aún. ¡Sé el primero en escribir!</p>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`modern-message-row ${
-                message.sender === currentUser.username ? 'sent' : 'received'
-              }`}
-            >
-              <div
-                className={`modern-message-bubble ${
-                  message.sender === currentUser.username ? 'sent' : 'received'
-                }`}
-              >
-                {message.sender !== currentUser.username && (
-                  <p className="modern-message-sender">{message.sender}</p>
-                )}
-                <p className="modern-message-text">{message.text}</p>
-                <p className={`modern-message-time ${
-                  message.sender === currentUser.username ? 'sent' : 'received'
-                }`}>
-                  {formatTime(message.timestamp)}
-                </p>
+  // Chat de Stream (AQUÍ ESTÁ EL CHAT REAL)
+  if (showChat && channel) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <Chat client={chatClient} theme="str-chat__theme-light">
+          <div style={{ display: 'flex', height: '100vh' }}>
+            {/* Lista de canales (sidebar) */}
+            <div style={{ 
+              width: '320px', 
+              background: 'white', 
+              borderRight: '1px solid #e5e7eb',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ 
+                padding: '1rem 1.5rem', 
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <h2 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: '700', 
+                  color: '#1f2937',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  FortunaChat
+                </h2>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => setShowChat(false)}
+                    style={{
+                      padding: '0.5rem',
+                      border: 'none',
+                      background: 'transparent',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      color: '#6b7280'
+                    }}
+                  >
+                    <MessageCircle style={{ width: '1.25rem', height: '1.25rem' }} />
+                  </button>
+                </div>
+              </div>
+              
+              <div style={{ 
+                padding: '0.5rem 1rem', 
+                fontSize: '0.875rem', 
+                color: '#6b7280',
+                borderBottom: '1px solid #f3f4f6'
+              }}>
+                Conectado como: <strong>{currentUser.username}</strong>
+              </div>
+              
+              <div style={{ flex: 1 }}>
+                <ChannelList 
+                  filters={{ type: 'messaging', members: { $in: [currentUser.username] } }}
+                  sort={{ last_message_at: -1 }}
+                  options={{ limit: 10 }}
+                />
+              </div>
+              
+              <div style={{ 
+                padding: '1rem', 
+                borderTop: '1px solid #e5e7eb',
+                background: '#f9fafb'
+              }}>
+                <button
+                  onClick={disconnectUser}
+                  className="modern-logout-btn"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <LogOut style={{ width: '1rem', height: '1rem' }} />
+                  Desconectar
+                </button>
               </div>
             </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      {/* Formulario de envío */}
-      <div className="modern-input-area">
-        <div className="modern-input-container-chat">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="Escribe tu mensaje..."
-            className="modern-message-input"
-          />
-          <button
-            type="button"
-            onClick={handleSendMessage}
-            className="modern-send-btn"
-            disabled={!newMessage.trim()}
-          >
-            <span>→</span>
-          </button>
-        </div>
+            {/* Área de chat principal - AQUÍ VES STREAM CHAT REAL */}
+            <div style={{ flex: 1 }}>
+              <Channel channel={channel}>
+                <Window>
+                  <ChannelHeader />
+                  <MessageList />
+                  <MessageInput />
+                </Window>
+                <Thread />
+              </Channel>
+            </div>
+          </div>
+        </Chat>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 };
 
-export default ChatApp;
+export default ChatApp;gi
