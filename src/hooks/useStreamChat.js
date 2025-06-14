@@ -16,51 +16,60 @@ export const useStreamChat = (currentUser) => {
     // Solo inicializar el cliente cuando hay currentUser, pero NO conectar automáticamente
     useEffect(() => {
         if (currentUser?.username) {
+            console.log('Inicializando cliente de Stream para:', currentUser.username);
             // Solo crear la instancia del cliente
             const client = StreamChat.getInstance('7met7m5hgkb8');
             setChatClient(client);
             setIsAdmin(currentUser.username === 'admin' || currentUser.role === 'admin');
+        } else {
+            console.log('No hay currentUser, limpiando cliente');
+            setChatClient(null);
+            setChannel(null);
         }
 
         // Cleanup: desconectar usuario cuando cambie o se desmonte
         return () => {
-            if (chatClient) {
+            if (chatClient && chatClient.user) {
+                console.log('Limpiando conexión de Stream Chat');
                 chatClient.disconnectUser().catch(console.error);
-                setChatClient(null);
-                setChannel(null);
             }
         };
-    }, [currentUser]);
+    }, [currentUser?.username]); // Dependencia más específica
 
     // Conectar usuario (función expuesta para usar en ChatApp)
     const connectUser = useCallback(async (user) => {
+        console.log('connectUser llamado con:', user);
+        
         if (!user?.username || !user?.token) {
             console.error('Usuario o token faltante:', user);
             return;
         }
 
-        if (!chatClient) {
-            console.error('Cliente de chat no inicializado');
-            return;
+        // Si no hay cliente, crear uno
+        let client = chatClient;
+        if (!client) {
+            console.log('Creando nuevo cliente de Stream');
+            client = StreamChat.getInstance('7met7m5hgkb8');
+            setChatClient(client);
         }
 
         setIsConnecting(true);
         try {
             // Verificar si ya está conectado
-            if (chatClient.user && chatClient.user.id === user.username) {
+            if (client.user && client.user.id === user.username) {
                 console.log('Usuario ya conectado:', user.username);
                 setIsConnecting(false);
                 return;
             }
 
             // Desconectar usuario previo si existe
-            if (chatClient.user) {
-                console.log('Desconectando usuario previo:', chatClient.user.id);
-                await chatClient.disconnectUser();
+            if (client.user) {
+                console.log('Desconectando usuario previo:', client.user.id);
+                await client.disconnectUser();
             }
             
-            console.log('Conectando usuario:', user.username);
-            await chatClient.connectUser(
+            console.log('Conectando usuario a Stream:', user.username);
+            await client.connectUser(
                 { 
                     id: user.username, 
                     name: user.name || user.username,
@@ -70,7 +79,8 @@ export const useStreamChat = (currentUser) => {
             );
 
             // Crear/obtener canal general
-            const generalChannel = chatClient.channel('messaging', 'general', {
+            console.log('Creando canal general');
+            const generalChannel = client.channel('messaging', 'general', {
                 name: 'General',
                 members: [user.username],
             });
