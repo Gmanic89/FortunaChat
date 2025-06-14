@@ -36,6 +36,7 @@ const ChatApp = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminView, setAdminView] = useState('chat'); // 'chat' | 'users'
   const [selectedUserChat, setSelectedUserChat] = useState(null);
+  const [availableChannels, setAvailableChannels] = useState([]); // NUEVA: Lista manual de canales
 
   // Cargar usuarios del localStorage
   useEffect(() => {
@@ -48,6 +49,44 @@ const ChatApp = () => {
       connectUserToStream(savedCurrentUser);
     }
   }, []);
+
+  // Cargar canales disponibles para admin
+  const loadAdminChannels = async () => {
+    if (isAdmin && chatClient.user) {
+      try {
+        const filter = { type: 'messaging', members: { $in: [ADMIN_USERNAME] } };
+        const sort = { last_message_at: -1 };
+        const channels = await chatClient.queryChannels(filter, sort, { limit: 20 });
+        
+        const channelsWithUsers = channels.map(ch => {
+          const otherMember = ch.state.members ? 
+            Object.keys(ch.state.members).find(member => member !== ADMIN_USERNAME) : 
+            'Usuario';
+          return {
+            channel: ch,
+            userName: otherMember || 'Usuario',
+            lastMessage: ch.state.messages[ch.state.messages.length - 1]?.text || 'Sin mensajes',
+            timestamp: ch.state.last_message_at || ch.state.created_at
+          };
+        });
+        
+        setAvailableChannels(channelsWithUsers);
+        console.log('📝 Canales cargados:', channelsWithUsers.length);
+      } catch (error) {
+        console.error('Error cargando canales:', error);
+      }
+    }
+  };
+
+  // Cargar canales cuando el admin se conecta
+  useEffect(() => {
+    if (isAdmin && chatClient.user) {
+      loadAdminChannels();
+      // Recargar cada 10 segundos para nuevos mensajes
+      const interval = setInterval(loadAdminChannels, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, chatClient.user]);
 
   // Verificar si es admin
   const checkIfAdmin = (username) => {
@@ -156,6 +195,18 @@ const ChatApp = () => {
       console.log(`✅ Chat abierto con ${username}`);
     } catch (error) {
       console.error('Error abriendo chat privado:', error);
+    }
+  };
+
+  // Seleccionar canal manualmente (NUEVA función)
+  const selectChannel = async (channelData) => {
+    try {
+      console.log('🔥 SELECCIONANDO CANAL:', channelData.channel.id);
+      await channelData.channel.watch();
+      setChannel(channelData.channel);
+      setSelectedUserChat(channelData.channel);
+    } catch (error) {
+      console.error('Error seleccionando canal:', error);
     }
   };
 
