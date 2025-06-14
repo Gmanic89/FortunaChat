@@ -1,0 +1,583 @@
+/* ModernChat.css - Estilos modernos estilo Claude */
+
+/* Variables CSS para colores y valores reutilizables */
+:root {
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #dbeafe 50%, #e0e7ff 100%);
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --border-radius-xl: 1rem;
+    --border-radius-2xl: 1.5rem;
+    --border-radius-3xl: 2rem;
+}
+
+/* Reset y configuración base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--bg-gradient);
+}
+
+/* Pantalla de login moderna */
+.modern-login-container {
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modern-login-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-3xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2rem;
+    width: 100%;
+    max-width: 28rem;
+    animation: slideInUp 0.6s ease-out;
+}
+
+.modern-login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.modern-app-icon {
+    background: var(--primary-gradient);
+    width: 5rem;
+    height: 5rem;
+    border-radius: var(--border-radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.modern-app-title {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1f2937 0%, #6b7280 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.modern-app-subtitle {
+    color: #6b7280;
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+/* Formularios modernos */
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modern-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.modern-input-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.modern-input-container {
+    position: relative;
+}
+
+.modern-input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #9ca3af;
+}
+
+.modern-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--border-radius-xl);
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.modern-input:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #6366f1;
+    border-color: #6366f1;
+    background: white;
+}
+
+.modern-input:hover {
+    border-color: #d1d5db;
+}
+
+/* Botones modernos */
+.modern-btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius-xl);
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.modern-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.4);
+}
+
+.modern-btn-primary:active {
+    transform: translateY(0);
+}
+
+.modern-btn-secondary {
+    background: transparent;
+    color: #6366f1;
+    border: none;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0.5rem;
+}
+
+.modern-btn-secondary:hover {
+    color: #4f46e5;
+}
+
+/* Pantalla principal con icono */
+.modern-main-screen {
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modern-main-content {
+    text-align: center;
+    max-width: 28rem;
+}
+
+.modern-chat-icon-wrapper {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 50%;
+    box-shadow: var(--shadow-xl);
+    padding: 3rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modern-chat-icon-btn {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50%;
+    padding: 2rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: var(--shadow-xl);
+}
+
+.modern-chat-icon-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.5);
+}
+
+.modern-welcome-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1f2937 0%, #6b7280 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.modern-welcome-subtitle {
+    color: #6b7280;
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+}
+
+.modern-status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #059669;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.modern-status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+/* Interfaz de chat moderna */
+.modern-chat-container {
+    min-height: 100vh;
+    background: white;
+    display: flex;
+}
+
+/* Header del chat */
+.modern-chat-header {
+    background: white;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modern-chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modern-chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modern-chat-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.modern-chat-user-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.modern-header-btn {
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.modern-header-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Área de mensajes */
+.modern-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modern-empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: #6b7280;
+}
+
+.modern-empty-icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    opacity: 0.5;
+}
+
+/* Mensajes */
+.modern-message-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.modern-message-row:hover {
+    background: #f8fafc;
+}
+
+.modern-message-row.sent {
+    justify-content: flex-end;
+}
+
+.modern-message-row.received {
+    justify-content: flex-start;
+}
+
+.modern-message-bubble {
+    max-width: 24rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    position: relative;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+.modern-message-bubble.sent {
+    background: var(--primary-gradient);
+    color: white;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.modern-message-bubble.received {
+    background: white;
+    color: #1f2937;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.modern-message-sender {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.modern-message-text {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.modern-message-time {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    opacity: 0.7;
+}
+
+.modern-message-time.sent {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.modern-message-time.received {
+    color: #9ca3af;
+}
+
+/* Input de mensaje moderno */
+.modern-input-area {
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 1.5rem;
+}
+
+.modern-input-container-chat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modern-message-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--border-radius-xl);
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.modern-message-input:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #6366f1;
+    border-color: #6366f1;
+    background: white;
+}
+
+.modern-send-btn {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.75rem;
+    border-radius: var(--border-radius-xl);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-lg);
+}
+
+.modern-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.modern-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Botón de logout moderno */
+.modern-logout-btn {
+    color: #dc2626;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.modern-logout-btn:hover {
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modern-login-card {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .modern-app-title {
+        font-size: 1.75rem;
+    }
+
+    .modern-welcome-title {
+        font-size: 2rem;
+    }
+
+    .modern-chat-header {
+        padding: 1rem;
+    }
+
+    .modern-chat-user-info {
+        display: none;
+    }
+
+    .modern-message-bubble {
+        max-width: 18rem;
+    }
+
+    .modern-input-area {
+        padding: 1rem;
+    }
+}
+
+/* Scrollbar personalizado */
+.modern-messages-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modern-messages-area::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.modern-messages-area::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.modern-messages-area::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Estados de hover mejorados */
+.modern-input:hover {
+    border-color: #d1d5db;
+}
+
+.modern-btn-primary:focus,
+.modern-send-btn:focus {
+    outline: none;
+    ring: 3px;
+    ring-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Efectos de glassmorphism */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
