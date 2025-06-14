@@ -597,12 +597,13 @@ const ChatApp = () => {
                   // Lista de canales normal
                   <ChannelList 
                     filters={{ 
-                      type: isAdmin ? 'messaging' : 'messaging', 
+                      type: 'messaging', 
                       members: { $in: [currentUser.username] } 
                     }}
                     sort={{ last_message_at: -1 }}
                     options={{ limit: 10 }}
-                    onChannelSelect={(channel) => {
+                    onSelect={(channel) => {
+                      console.log('Canal seleccionado:', channel);
                       setChannel(channel);
                       setSelectedUserChat(channel);
                     }}
