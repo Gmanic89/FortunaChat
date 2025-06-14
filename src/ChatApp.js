@@ -57,46 +57,29 @@ const ChatApp = () => {
   // Crear canal privado con admin
   const createPrivateChannelWithAdmin = async (newUsername) => {
     try {
-      // Verificar que el admin existe en Stream
-      if (!isAdmin && !users.find(u => u.username === ADMIN_USERNAME)) {
-        console.log('⚠️ Admin no encontrado, saltando creación de canal privado');
-        return null;
-      }
-      
       const channelId = `private-${ADMIN_USERNAME}-${newUsername}`;
       const privateChannel = chatClient.channel('messaging', channelId, {
-        name: `Chat privado: ${newUsername}`,
-        members: [newUsername], // Solo agregar el usuario nuevo por ahora
+        name: `Chat con ${newUsername}`,
+        members: [ADMIN_USERNAME, newUsername],
         created_by_id: newUsername,
       });
       
       await privateChannel.create();
       
-      // Solo enviar mensaje si el admin está registrado
-      const adminExists = users.find(u => u.username === ADMIN_USERNAME);
-      if (adminExists) {
-        // Agregar admin al canal después de crearlo
-        await privateChannel.addMembers([ADMIN_USERNAME]);
-        
-        // Enviar mensaje automático de bienvenida
-        await privateChannel.sendMessage({
-          text: `¡Hola ${newUsername}! 👋 Bienvenido a FortunaChat. Soy el administrador y estoy aquí para ayudarte. ¿En qué puedo asistirte?`,
-          user_id: ADMIN_USERNAME,
-        });
-      }
-      
       console.log(`✅ Canal privado creado: ${channelId}`);
       return privateChannel;
     } catch (error) {
       console.error('Error creando canal privado:', error);
-      // Si falla, crear canal solo para el usuario
+      // Si el admin no existe aún, crear el canal sin él y se agregará cuando se registre
       try {
-        const fallbackChannel = chatClient.channel('messaging', `user-${newUsername}`, {
-          name: `Chat de ${newUsername}`,
+        const channelId = `private-${ADMIN_USERNAME}-${newUsername}`;
+        const fallbackChannel = chatClient.channel('messaging', channelId, {
+          name: `Chat con ${newUsername}`,
           members: [newUsername],
           created_by_id: newUsername,
         });
         await fallbackChannel.create();
+        console.log(`✅ Canal creado, admin se agregará después`);
         return fallbackChannel;
       } catch (fallbackError) {
         console.error('Error en canal fallback:', fallbackError);
@@ -124,17 +107,29 @@ const ChatApp = () => {
         token
       );
 
-      // Para admin: conectar al canal general
-      // Para usuarios: crear canal privado con admin
+      // Para admin: ver todos los chats privados
+      // Para usuarios: SOLO chat privado con admin
       let defaultChannel;
       
       if (adminStatus) {
-        // Admin ve el canal general
-        defaultChannel = chatClient.channel('livestream', 'general');
-        await defaultChannel.watch();
+        // Admin: puede ver el primer chat disponible o crear uno temporal
+        defaultChannel = chatClient.channel('messaging', 'admin-general', {
+          name: 'Panel de Admin',
+          members: [user.username],
+        });
+        await defaultChannel.create();
       } else {
-        // Usuario nuevo: crear canal privado con admin
+        // Usuario: SIEMPRE chat privado con admin
         defaultChannel = await createPrivateChannelWithAdmin(user.username);
+        
+        if (!defaultChannel) {
+          // Si falla, crear un canal temporal hasta que el admin se una
+          defaultChannel = chatClient.channel('messaging', `waiting-${user.username}`, {
+            name: 'Esperando al administrador...',
+            members: [user.username],
+          });
+          await defaultChannel.create();
+        }
       }
 
       setChannel(defaultChannel);
@@ -651,4 +646,4 @@ const ChatApp = () => {
   return null;
 };
 
-export default ChatApp; 
+export default ChatApp;
