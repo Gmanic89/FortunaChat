@@ -67,6 +67,8 @@ export function useAuth() {
     const login = async ({ username, password }) => {
         setIsLoading(true);
         try {
+            console.log('Intentando login con:', { username, password });
+            
             // ✅ Corregir URL: agregar /api/login
             const res = await fetch('https://streamchat-backend.vercel.app/api/login', {
                 method: 'POST',
@@ -75,6 +77,7 @@ export function useAuth() {
             });
             
             const data = await res.json();
+            console.log('Respuesta del servidor:', data);
             
             if (!res.ok) {
                 throw new Error(data.error || 'Usuario o contraseña incorrectos');
@@ -93,13 +96,16 @@ export function useAuth() {
                 role: username === 'admin' ? 'admin' : 'user', // Lógica simple de admin
             };
 
+            console.log('Usuario creado:', user);
+
             // Guardar en localStorage
             localStorage.setItem('chatUser', JSON.stringify(user));
             setCurrentUser(user);
             
+            console.log('✅ Login exitoso:', user);
             return user;
         } catch (error) {
-            console.error('Error en login:', error);
+            console.error('❌ Error en login:', error);
             throw error;
         } finally {
             setIsLoading(false);

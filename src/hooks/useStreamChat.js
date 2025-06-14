@@ -13,48 +13,14 @@ export const useStreamChat = (currentUser) => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
 
-    // Conectar usuario a Stream cuando cambia currentUser
+    // Solo inicializar el cliente cuando hay currentUser, pero NO conectar automáticamente
     useEffect(() => {
-        const connect = async () => {
-            if (!currentUser?.username || !currentUser?.token) return;
-
-            setIsConnecting(true);
-            try {
-                // ✅ Usar tu API Key real (la misma que tienes en el backend)
-                const client = StreamChat.getInstance('7met7m5hgkb8');
-                
-                await client.connectUser(
-                    { 
-                        id: currentUser.username, 
-                        name: currentUser.name || currentUser.username,
-                        username: currentUser.username,
-                    },
-                    currentUser.token
-                );
-                
-                setChatClient(client);
-
-                // Chequear si es admin
-                setIsAdmin(currentUser.username === 'admin' || currentUser.role === 'admin');
-
-                // Crear/obtener canal general por defecto
-                const generalChannel = client.channel('messaging', 'general', {
-                    name: 'General',
-                    members: [currentUser.username],
-                });
-
-                await generalChannel.create();
-                setChannel(generalChannel);
-
-                console.log('Usuario conectado a Stream Chat:', currentUser.username);
-            } catch (err) {
-                console.error('Error conectando usuario a Stream:', err);
-            } finally {
-                setIsConnecting(false);
-            }
-        };
-
-        connect();
+        if (currentUser?.username) {
+            // Solo crear la instancia del cliente
+            const client = StreamChat.getInstance('7met7m5hgkb8');
+            setChatClient(client);
+            setIsAdmin(currentUser.username === 'admin' || currentUser.role === 'admin');
+        }
 
         // Cleanup: desconectar usuario cuando cambie o se desmonte
         return () => {
@@ -68,13 +34,33 @@ export const useStreamChat = (currentUser) => {
 
     // Conectar usuario (función expuesta para usar en ChatApp)
     const connectUser = useCallback(async (user) => {
-        if (!user?.username || !user?.token) return;
+        if (!user?.username || !user?.token) {
+            console.error('Usuario o token faltante:', user);
+            return;
+        }
+
+        if (!chatClient) {
+            console.error('Cliente de chat no inicializado');
+            return;
+        }
 
         setIsConnecting(true);
         try {
-            const client = StreamChat.getInstance('7met7m5hgkb8');
+            // Verificar si ya está conectado
+            if (chatClient.user && chatClient.user.id === user.username) {
+                console.log('Usuario ya conectado:', user.username);
+                setIsConnecting(false);
+                return;
+            }
+
+            // Desconectar usuario previo si existe
+            if (chatClient.user) {
+                console.log('Desconectando usuario previo:', chatClient.user.id);
+                await chatClient.disconnectUser();
+            }
             
-            await client.connectUser(
+            console.log('Conectando usuario:', user.username);
+            await chatClient.connectUser(
                 { 
                     id: user.username, 
                     name: user.name || user.username,
@@ -82,12 +68,9 @@ export const useStreamChat = (currentUser) => {
                 },
                 user.token
             );
-            
-            setChatClient(client);
-            setIsAdmin(user.username === 'admin' || user.role === 'admin');
 
             // Crear/obtener canal general
-            const generalChannel = client.channel('messaging', 'general', {
+            const generalChannel = chatClient.channel('messaging', 'general', {
                 name: 'General',
                 members: [user.username],
             });
@@ -95,14 +78,14 @@ export const useStreamChat = (currentUser) => {
             await generalChannel.create();
             setChannel(generalChannel);
 
-            console.log('Usuario conectado a Stream Chat:', user.username);
+            console.log('✅ Usuario conectado exitosamente a Stream Chat:', user.username);
         } catch (error) {
-            console.error('Error conectando usuario a Stream:', error);
+            console.error('❌ Error conectando usuario a Stream:', error);
             throw error;
         } finally {
             setIsConnecting(false);
         }
-    }, []);
+    }, [chatClient]);
 
     // Cambiar canal activo
     const switchChannel = useCallback(
