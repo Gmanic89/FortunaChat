@@ -100,33 +100,6 @@ const SimpleUserChat = ({
         marginBottom: isMobile ? '1rem' : '0'
     };
 
-    const chatAreaStyle = {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: isMobile
-            ? 'calc(100vh - 320px)' // Más espacio sin mensaje de bienvenida
-            : 'calc(100vh - 280px)'
-    };
-
-    const messageListStyle = {
-        flex: 1,
-        overflow: 'auto', // Cambio a auto para scroll independiente
-        minHeight: isMobile ? '200px' : '300px', // Más altura para mensajes
-        maxHeight: isMobile ? 'calc(100vh - 320px)' : 'calc(100vh - 280px)', // Altura máxima
-        paddingBottom: isMobile ? '0.5rem' : '0.25rem'
-    };
-
-    const inputContainerStyle = {
-        borderTop: '1px solid #e5e7eb',
-        background: 'white',
-        paddingBottom: isMobile ? '1rem' : '0.5rem',
-        paddingTop: '0.5rem',
-        position: 'sticky', // Hacer que siempre esté visible
-        bottom: 0,
-        zIndex: 10
-    };
-
     // Botón SINOCA moderno - MÁS FINO Y FLOTANTE
     const sinocaButtonStyle = {
         width: '100%',
@@ -154,12 +127,6 @@ const SimpleUserChat = ({
     };
 
     // Estilos para mensajes sugeridos
-    const suggestedMessagesContainerStyle = {
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-        background: '#f8fafc',
-        borderTop: '1px solid #e5e7eb'
-    };
-
     const suggestedMessagesGridStyle = {
         display: 'flex', // Cambio a flex para control de ancho personalizado
         gap: isMobile ? '0.5rem' : '0.75rem',
@@ -288,17 +255,18 @@ const SimpleUserChat = ({
                         </div>
                     </div>
 
-                    {/* Área de chat - TODA LA PANTALLA ENTRE HEADER E INPUT */}
-                    <div style={{
-                        position: 'fixed',
-                        top: isMobile ? '70px' : '80px',
-                        left: 0,
-                        right: 0,
-                        bottom: isMobile ? '140px' : '130px', // Espacio para respuestas rápidas + input
-                        overflow: 'hidden',
-                        background: '#f8fafc'
-                    }}>
-                        <Channel channel={channel}>
+                    {/* Channel wrapper - CONTIENE TODA LA LÓGICA DE CHAT */}
+                    <Channel channel={channel}>
+                        {/* Área de chat - TODA LA PANTALLA ENTRE HEADER E INPUT */}
+                        <div style={{
+                            position: 'fixed',
+                            top: isMobile ? '70px' : '80px',
+                            left: 0,
+                            right: 0,
+                            bottom: isMobile ? '140px' : '130px', // Espacio para respuestas rápidas + input
+                            overflow: 'hidden',
+                            background: '#f8fafc'
+                        }}>
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -389,113 +357,113 @@ const SimpleUserChat = ({
                                     </button>
                                 </div>
                             </div>
-                        </Channel>
-                    </div>
-
-                    {/* RESPUESTAS RÁPIDAS + INPUT - SIEMPRE FIJO ABAJO */}
-                    <div style={{
-                        position: 'fixed',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        background: 'white',
-                        borderTop: '1px solid #e5e7eb',
-                        zIndex: 1000,
-                        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                        {/* MENSAJES SUGERIDOS - FIJO ENCIMA DEL INPUT */}
-                        <div style={{
-                            padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-                            background: '#f8fafc',
-                            borderBottom: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{
-                                fontSize: isMobile ? '0.7rem' : '0.875rem',
-                                color: '#6b7280',
-                                marginBottom: isMobile ? '0.5rem' : '0.75rem',
-                                fontWeight: '500',
-                                textAlign: 'center'
-                            }}>
-                                💬 Respuestas rápidas
-                            </div>
-                            <div style={suggestedMessagesGridStyle}>
-                                {suggestedMessages.map((msg) => {
-                                    const IconComponent = msg.icon;
-                                    return (
-                                        <button
-                                            key={msg.id}
-                                            onClick={() => handleSuggestedMessageClick(msg.text)}
-                                            style={getSuggestedMessageStyle(msg.color, msg.width)}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                                                e.target.style.boxShadow = `0 6px 12px -2px ${msg.color}30`;
-                                                e.target.style.borderColor = `${msg.color}60`;
-                                                e.target.style.background = `${msg.color}05`;
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.transform = 'translateY(0) scale(1)';
-                                                e.target.style.boxShadow = '0 2px 4px -1px rgba(0, 0, 0, 0.1)';
-                                                e.target.style.borderColor = `${msg.color}20`;
-                                                e.target.style.background = 'white';
-                                            }}
-                                            onTouchStart={(e) => {
-                                                e.target.style.transform = 'scale(0.95)';
-                                                e.target.style.background = `${msg.color}10`;
-                                            }}
-                                            onTouchEnd={(e) => {
-                                                e.target.style.transform = 'scale(1)';
-                                                e.target.style.background = 'white';
-                                            }}
-                                        >
-                                            {/* Efecto de ripple en click */}
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                right: 0,
-                                                bottom: 0,
-                                                background: `linear-gradient(45deg, ${msg.color}10, transparent)`,
-                                                opacity: 0,
-                                                borderRadius: 'inherit',
-                                                pointerEvents: 'none'
-                                            }} />
-
-                                            <IconComponent
-                                                style={{
-                                                    width: isMobile ? '1.25rem' : '1.25rem',
-                                                    height: isMobile ? '1.25rem' : '1.25rem',
-                                                    color: msg.color,
-                                                    flexShrink: 0,
-                                                    filter: `drop-shadow(0 1px 2px ${msg.color}40)`
-                                                }}
-                                            />
-                                            <span style={{
-                                                flex: isMobile ? 'unset' : 1,
-                                                lineHeight: isMobile ? '1.2' : '1.4',
-                                                fontSize: isMobile ? (msg.width === '70%' ? '0.65rem' : '0.6rem') : '0.875rem',
-                                                fontWeight: isMobile ? '700' : '600'
-                                            }}>
-                                                {isMobile ? msg.shortText : msg.text}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
                         </div>
 
-                        {/* Input de mensaje - COMPLETAMENTE FIJO EN LA PARTE INFERIOR */}
+                        {/* RESPUESTAS RÁPIDAS + INPUT - SIEMPRE FIJO ABAJO - DENTRO DEL CHANNEL */}
                         <div style={{
+                            position: 'fixed',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
                             background: 'white',
-                            paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 1rem)' : '0.5rem',
-                            paddingTop: '0.5rem',
-                            paddingLeft: '1rem',
-                            paddingRight: '1rem'
+                            borderTop: '1px solid #e5e7eb',
+                            zIndex: 1000,
+                            boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
                         }}>
-                            <MessageInput
-                                placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
-                            />
+                            {/* MENSAJES SUGERIDOS - FIJO ENCIMA DEL INPUT */}
+                            <div style={{
+                                padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
+                                background: '#f8fafc',
+                                borderBottom: '1px solid #e5e7eb'
+                            }}>
+                                <div style={{
+                                    fontSize: isMobile ? '0.7rem' : '0.875rem',
+                                    color: '#6b7280',
+                                    marginBottom: isMobile ? '0.5rem' : '0.75rem',
+                                    fontWeight: '500',
+                                    textAlign: 'center'
+                                }}>
+                                    💬 Respuestas rápidas
+                                </div>
+                                <div style={suggestedMessagesGridStyle}>
+                                    {suggestedMessages.map((msg) => {
+                                        const IconComponent = msg.icon;
+                                        return (
+                                            <button
+                                                key={msg.id}
+                                                onClick={() => handleSuggestedMessageClick(msg.text)}
+                                                style={getSuggestedMessageStyle(msg.color, msg.width)}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                                                    e.target.style.boxShadow = `0 6px 12px -2px ${msg.color}30`;
+                                                    e.target.style.borderColor = `${msg.color}60`;
+                                                    e.target.style.background = `${msg.color}05`;
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.transform = 'translateY(0) scale(1)';
+                                                    e.target.style.boxShadow = '0 2px 4px -1px rgba(0, 0, 0, 0.1)';
+                                                    e.target.style.borderColor = `${msg.color}20`;
+                                                    e.target.style.background = 'white';
+                                                }}
+                                                onTouchStart={(e) => {
+                                                    e.target.style.transform = 'scale(0.95)';
+                                                    e.target.style.background = `${msg.color}10`;
+                                                }}
+                                                onTouchEnd={(e) => {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.background = 'white';
+                                                }}
+                                            >
+                                                {/* Efecto de ripple en click */}
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    right: 0,
+                                                    bottom: 0,
+                                                    background: `linear-gradient(45deg, ${msg.color}10, transparent)`,
+                                                    opacity: 0,
+                                                    borderRadius: 'inherit',
+                                                    pointerEvents: 'none'
+                                                }} />
+
+                                                <IconComponent
+                                                    style={{
+                                                        width: isMobile ? '1.25rem' : '1.25rem',
+                                                        height: isMobile ? '1.25rem' : '1.25rem',
+                                                        color: msg.color,
+                                                        flexShrink: 0,
+                                                        filter: `drop-shadow(0 1px 2px ${msg.color}40)`
+                                                    }}
+                                                />
+                                                <span style={{
+                                                    flex: isMobile ? 'unset' : 1,
+                                                    lineHeight: isMobile ? '1.2' : '1.4',
+                                                    fontSize: isMobile ? (msg.width === '70%' ? '0.65rem' : '0.6rem') : '0.875rem',
+                                                    fontWeight: isMobile ? '700' : '600'
+                                                }}>
+                                                    {isMobile ? msg.shortText : msg.text}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Input de mensaje - COMPLETAMENTE FIJO EN LA PARTE INFERIOR - DENTRO DEL CHANNEL */}
+                            <div style={{
+                                background: 'white',
+                                paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 1rem)' : '0.5rem',
+                                paddingTop: '0.5rem',
+                                paddingLeft: '1rem',
+                                paddingRight: '1rem'
+                            }}>
+                                <MessageInput
+                                    placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    </Channel>
                 </div>
             </div>
 
