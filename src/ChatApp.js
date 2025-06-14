@@ -21,7 +21,7 @@ const API_KEY = '7met7m5hgkb8';
 const chatClient = StreamChat.getInstance(API_KEY);
 
 // Define tu username de admin aquí
-const ADMIN_USERNAME = 'admin'; // ← Tu username correcto
+const ADMIN_USERNAME = 'admin';
 
 const ChatApp = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -34,9 +34,7 @@ const ChatApp = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [channel, setChannel] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminView, setAdminView] = useState('chat'); // 'chat' | 'users'
-  const [selectedUserChat, setSelectedUserChat] = useState(null);
-  const [availableChannels, setAvailableChannels] = useState([]); // NUEVA: Lista manual de canales
+  const [adminView, setAdminView] = useState('chat');
 
   // Cargar usuarios del localStorage
   useEffect(() => {
@@ -49,44 +47,6 @@ const ChatApp = () => {
       connectUserToStream(savedCurrentUser);
     }
   }, []);
-
-  // Cargar canales disponibles para admin
-  const loadAdminChannels = async () => {
-    if (isAdmin && chatClient.user) {
-      try {
-        const filter = { type: 'messaging', members: { $in: [ADMIN_USERNAME] } };
-        const sort = { last_message_at: -1 };
-        const channels = await chatClient.queryChannels(filter, sort, { limit: 20 });
-        
-        const channelsWithUsers = channels.map(ch => {
-          const otherMember = ch.state.members ? 
-            Object.keys(ch.state.members).find(member => member !== ADMIN_USERNAME) : 
-            'Usuario';
-          return {
-            channel: ch,
-            userName: otherMember || 'Usuario',
-            lastMessage: ch.state.messages[ch.state.messages.length - 1]?.text || 'Sin mensajes',
-            timestamp: ch.state.last_message_at || ch.state.created_at
-          };
-        });
-        
-        setAvailableChannels(channelsWithUsers);
-        console.log('📝 Canales cargados:', channelsWithUsers.length);
-      } catch (error) {
-        console.error('Error cargando canales:', error);
-      }
-    }
-  };
-
-  // Cargar canales cuando el admin se conecta
-  useEffect(() => {
-    if (isAdmin && chatClient.user) {
-      loadAdminChannels();
-      // Recargar cada 10 segundos para nuevos mensajes
-      const interval = setInterval(loadAdminChannels, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [isAdmin, chatClient.user]);
 
   // Verificar si es admin
   const checkIfAdmin = (username) => {
@@ -109,7 +69,6 @@ const ChatApp = () => {
       return privateChannel;
     } catch (error) {
       console.error('Error creando canal privado:', error);
-      // Si el admin no existe aún, crear el canal sin él y se agregará cuando se registre
       try {
         const channelId = `private-${ADMIN_USERNAME}-${newUsername}`;
         const fallbackChannel = chatClient.channel('messaging', channelId, {
@@ -146,20 +105,17 @@ const ChatApp = () => {
         token
       );
 
-      // Para admin: NO crear canal inicial, dejar que se seleccione desde la lista
-      // Para usuarios: SOLO chat privado con admin
-      let defaultChannel = null;
+      let defaultChannel;
       
       if (adminStatus) {
-        // Admin: NO establecer canal por defecto, se seleccionará desde ChannelList
-        console.log('👑 Admin conectado, esperando selección de chat');
-        defaultChannel = null; // Explícitamente null para admin
+        // Admin: usar canal general (como antes)
+        defaultChannel = chatClient.channel('livestream', 'general');
+        await defaultChannel.watch();
       } else {
-        // Usuario: SIEMPRE chat privado con admin
+        // Usuario: chat privado con admin
         defaultChannel = await createPrivateChannelWithAdmin(user.username);
         
         if (!defaultChannel) {
-          // Si falla, crear un canal temporal hasta que el admin se una
           defaultChannel = chatClient.channel('messaging', `waiting-${user.username}`, {
             name: 'Esperando al administrador...',
             members: [user.username],
@@ -173,46 +129,11 @@ const ChatApp = () => {
       setShowLogin(false);
       setIsConnecting(false);
       
-      // Para admin, cargar canales después de conectar
-      if (adminStatus) {
-        setTimeout(() => loadAdminChannels(), 1000);
-      }
-      
       console.log('✅ Conectado a Stream Chat exitosamente');
     } catch (error) {
       console.error('❌ Error conectando a Stream:', error);
       setIsConnecting(false);
       alert('Error conectando al chat: ' + error.message);
-    }
-  };
-
-  // Abrir chat privado con usuario (solo para admin)
-  const openPrivateChatWithUser = async (username) => {
-    try {
-      const channelId = `private-${ADMIN_USERNAME}-${username}`;
-      const privateChannel = chatClient.channel('messaging', channelId);
-      await privateChannel.watch();
-      
-      // Cambiar al tab de chats y establecer el canal activo
-      setAdminView('chat');
-      setSelectedUserChat(privateChannel);
-      setChannel(privateChannel);
-      
-      console.log(`✅ Chat abierto con ${username}`);
-    } catch (error) {
-      console.error('Error abriendo chat privado:', error);
-    }
-  };
-
-  // Seleccionar canal manualmente (NUEVA función)
-  const selectChannel = async (channelData) => {
-    try {
-      console.log('🔥 SELECCIONANDO CANAL:', channelData.channel.id);
-      await channelData.channel.watch();
-      setChannel(channelData.channel);
-      setSelectedUserChat(channelData.channel);
-    } catch (error) {
-      console.error('Error seleccionando canal:', error);
     }
   };
 
@@ -226,7 +147,6 @@ const ChatApp = () => {
       setShowLogin(true);
       setShowChat(false);
       setAdminView('chat');
-      setSelectedUserChat(null);
       localStorage.removeItem('fortunaCurrentUser');
     } catch (error) {
       console.error('Error desconectando:', error);
@@ -271,7 +191,6 @@ const ChatApp = () => {
     setIsRegistering(false);
     setRegisterData({ username: '', password: '', confirmPassword: '' });
     
-    // Conectar automáticamente después del registro
     await connectUserToStream(newUser);
   };
 
@@ -515,7 +434,6 @@ const ChatApp = () => {
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {/* Header */}
               <div style={{ 
                 padding: '1rem 1.5rem', 
                 borderBottom: '1px solid #e5e7eb',
@@ -602,30 +520,22 @@ const ChatApp = () => {
                 </div>
               )}
               
-              {/* Content Area */}
-              <div style={{ flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: 1 }}>
                 {isAdmin && adminView === 'users' ? (
-                  // Lista de usuarios para admin
                   <div style={{ padding: '1rem' }}>
                     <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
                       Usuarios Registrados ({users.filter(u => !checkIfAdmin(u.username)).length})
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       {users.filter(u => !checkIfAdmin(u.username)).map(user => (
-                        <button
+                        <div
                           key={user.id}
-                          onClick={() => openPrivateChatWithUser(user.username)}
                           style={{
                             padding: '0.75rem',
                             borderRadius: '0.5rem',
                             border: '1px solid #e5e7eb',
-                            background: 'white',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s'
+                            background: 'white'
                           }}
-                          onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
-                          onMouseLeave={(e) => e.target.style.background = 'white'}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <img
@@ -642,32 +552,19 @@ const ChatApp = () => {
                               </div>
                             </div>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  // Lista de canales normal - SIN USAR CHANNELLIST
-                  <div style={{ padding: '1rem' }}>
-                    {isAdmin && (
-                      <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
-                        Chats Activos
-                      </h3>
-                    )}
-                    <ChannelList 
-                      filters={{ 
-                        type: 'messaging', 
-                        members: { $in: [currentUser.username] } 
-                      }}
-                      sort={{ last_message_at: -1 }}
-                      options={{ limit: 10 }}
-                      onSelect={(selectedChannel) => {
-                        console.log('✅ Cambiando a canal:', selectedChannel.id);
-                        setChannel(selectedChannel);
-                        setSelectedUserChat(selectedChannel);
-                      }}
-                    />
-                  </div>
+                  <ChannelList 
+                    filters={{ 
+                      type: 'messaging', 
+                      members: { $in: [currentUser.username] } 
+                    }}
+                    sort={{ last_message_at: -1 }}
+                    options={{ limit: 10 }}
+                  />
                 )}
               </div>
               
@@ -687,9 +584,8 @@ const ChatApp = () => {
               </div>
             </div>
 
-            {/* Área de chat principal */}
             <div style={{ flex: 1 }}>
-              <Channel channel={channel} key={channel?.id}>
+              <Channel channel={channel}>
                 <Window>
                   <ChannelHeader />
                   <MessageList />
