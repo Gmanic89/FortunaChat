@@ -1,4 +1,4 @@
-// ChatApp.js (Refactorizado)
+// ChatApp.js (Finalizado)
 import React, { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useStreamChat } from './hooks/useStreamChat';
@@ -16,37 +16,46 @@ const ChatApp = () => {
   const [showChat, setShowChat] = useState(false);
   const [adminView, setAdminView] = useState(ADMIN_VIEWS.CHAT);
 
-  // Hooks personalizados
-  const { 
-    currentUser, 
-    users, 
-    isLoading: authLoading, 
-    register, 
-    login, 
-    logout, 
-    isAuthenticated 
+  // Hooks personalizados de autenticación y chat
+  const {
+    currentUser,
+    users,
+    isLoading: authLoading,
+    register,
+    login,
+    logout,
+    isAuthenticated,
   } = useAuth();
 
-  const { 
-    chatClient, 
-    channel, 
-    isAdmin, 
-    isConnecting, 
-    connectUser, 
-    findChannelForUser, 
-    switchChannel, 
-    setChannel 
+  const {
+    chatClient,
+    channel,
+    isAdmin,
+    isConnecting,
+    connectUser,
+    findChannelForUser,
+    switchChannel,
   } = useStreamChat(currentUser);
 
   // Handlers de autenticación
   const handleRegister = async (userData) => {
-    const newUser = await register(userData);
-    await connectUser(newUser);
+    try {
+      const newUser = await register(userData);
+      await connectUser(newUser);
+      setShowChat(true);
+    } catch (error) {
+      console.error('Error en registro:', error);
+    }
   };
 
   const handleLogin = async (credentials) => {
-    const user = await login(credentials);
-    await connectUser(user);
+    try {
+      const user = await login(credentials);
+      await connectUser(user);
+      setShowChat(true);
+    } catch (error) {
+      console.error('Error en login:', error);
+    }
   };
 
   const handleLogout = async () => {
@@ -61,18 +70,15 @@ const ChatApp = () => {
 
   const handleChannelSelect = async (userName) => {
     try {
-      console.log('🔍 Buscando canal para usuario:', userName);
       const targetChannel = await findChannelForUser(userName);
-      
+
       if (targetChannel) {
-        console.log('✅ Canal encontrado:', targetChannel.id);
         await switchChannel(targetChannel);
-        console.log('🎉 Canal cambiado exitosamente');
       } else {
-        console.log('❌ Canal no encontrado');
+        console.warn('Canal no encontrado para', userName);
       }
     } catch (error) {
-      console.error('💥 Error al cambiar canal:', error);
+      console.error('Error cambiando canal:', error);
     }
   };
 
@@ -84,7 +90,7 @@ const ChatApp = () => {
   // No autenticado - mostrar login/registro
   if (!isAuthenticated) {
     return (
-      <AuthContainer 
+      <AuthContainer
         onLogin={handleLogin}
         onRegister={handleRegister}
         isLoading={authLoading}
@@ -95,7 +101,7 @@ const ChatApp = () => {
   // Mostrar chat
   if (showChat && channel) {
     return (
-      <ChatWindow 
+      <ChatWindow
         chatClient={chatClient}
         channel={channel}
         currentUser={currentUser}
@@ -112,7 +118,7 @@ const ChatApp = () => {
 
   // Pantalla de bienvenida
   return (
-    <WelcomeScreen 
+    <WelcomeScreen
       currentUser={currentUser}
       isAdmin={isAdmin}
       onOpenChat={handleOpenChat}

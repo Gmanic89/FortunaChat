@@ -1,58 +1,121 @@
 // hooks/useAuth.js
 import { useState, useEffect } from 'react';
-import { authService } from '../services/auth';
-import { storageService } from '../services/storage';
 
-export const useAuth = () => {
+export function useAuth() {
     const [currentUser, setCurrentUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Verificar si hay usuario guardado al cargar
     useEffect(() => {
-        const savedUsers = storageService.getUsers();
-        const savedCurrentUser = storageService.getCurrentUser();
-
-        setUsers(savedUsers);
-        setCurrentUser(savedCurrentUser);
+        const savedUser = localStorage.getItem('chatUser');
+        if (savedUser) {
+            try {
+                const userData = JSON.parse(savedUser);
+                setCurrentUser(userData);
+            } catch (error) {
+                console.error('Error parsing saved user:', error);
+                localStorage.removeItem('chatUser');
+            }
+        }
     }, []);
 
-    const register = async (userData) => {
+    // Función de registro
+    const register = async ({ username, password, name, email, role = 'user' }) => {
+        setIsLoading(true);
         try {
-            setIsLoading(true);
-            const newUser = await authService.registerUser(userData);
+            const res = await fetch('https://streamchat-backend.vercel.app/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok) {
+                throw new Error(data.error || 'Error en el registro');
+            }
+
+            if (!data.success) {
+                throw new Error(data.error || 'Error en el registro');
+            }
+
+            // Crear objeto de usuario completo
+            const newUser = {
+                id: data.username,
+                username: data.username,
+                token: data.token,
+                name: name || data.username,
+                email: email,
+                role: role,
+            };
+
+            // Guardar en localStorage
+            localStorage.setItem('chatUser', JSON.stringify(newUser));
             setCurrentUser(newUser);
-            setUsers(prev => [...prev, newUser]);
+            
             return newUser;
         } catch (error) {
+            console.error('Error en registro:', error);
             throw error;
         } finally {
             setIsLoading(false);
         }
     };
 
-    const login = async (credentials) => {
+    // Función de login (corregida)
+    const login = async ({ username, password }) => {
+        setIsLoading(true);
         try {
-            setIsLoading(true);
-            const user = await authService.loginUser(credentials);
+            // ✅ Corregir URL: agregar /api/login
+            const res = await fetch('https://streamchat-backend.vercel.app/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok) {
+                throw new Error(data.error || 'Usuario o contraseña incorrectos');
+            }
+
+            if (!data.success) {
+                throw new Error(data.error || 'Usuario o contraseña incorrectos');
+            }
+
+            // Crear objeto de usuario completo
+            const user = {
+                id: data.username,
+                username: data.username,
+                token: data.token,
+                name: data.username, // Podrías expandir esto
+                role: username === 'admin' ? 'admin' : 'user', // Lógica simple de admin
+            };
+
+            // Guardar en localStorage
+            localStorage.setItem('chatUser', JSON.stringify(user));
             setCurrentUser(user);
+            
             return user;
         } catch (error) {
+            console.error('Error en login:', error);
             throw error;
         } finally {
             setIsLoading(false);
         }
     };
 
-    const logout = async () => {
-        try {
-            setIsLoading(true);
-            await authService.logoutUser();
-            setCurrentUser(null);
-        } catch (error) {
-            console.error('Error durante logout:', error);
-        } finally {
-            setIsLoading(false);
-        }
+    // Función de logout
+    const logout = () => {
+        localStorage.removeItem('chatUser');
+        setCurrentUser(null);
+        setUsers([]);
+    };
+
+    // Función para actualizar lista de usuarios
+    const updateUsers = (usersList) => {
+        setUsers(usersList);
     };
 
     return {
@@ -62,6 +125,7 @@ export const useAuth = () => {
         register,
         login,
         logout,
-        isAuthenticated: !!currentUser
+        updateUsers,
+        isAuthenticated: !!currentUser,
     };
-};
+}
