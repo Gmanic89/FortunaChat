@@ -21,7 +21,7 @@ const API_KEY = '7met7m5hgkb8';
 const chatClient = StreamChat.getInstance(API_KEY);
 
 // Define tu username de admin aquí
-const ADMIN_USERNAME = 'admin'; // ← CAMBIA ESTO POR TU USERNAME DE ADMIN
+const ADMIN_USERNAME = 'admin'; // ← Tu username correcto
 
 const ChatApp = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -107,17 +107,13 @@ const ChatApp = () => {
         token
       );
 
-      // Para admin: ver todos los chats privados
+      // Para admin: NO crear canal inicial, dejar que se seleccione desde la lista
       // Para usuarios: SOLO chat privado con admin
-      let defaultChannel;
+      let defaultChannel = null;
       
       if (adminStatus) {
-        // Admin: puede ver el primer chat disponible o crear uno temporal
-        defaultChannel = chatClient.channel('messaging', 'admin-general', {
-          name: 'Panel de Admin',
-          members: [user.username],
-        });
-        await defaultChannel.create();
+        // Admin: NO establecer canal por defecto, se seleccionará desde ChannelList
+        console.log('👑 Admin conectado, esperando selección de chat');
       } else {
         // Usuario: SIEMPRE chat privado con admin
         defaultChannel = await createPrivateChannelWithAdmin(user.username);
