@@ -17,7 +17,7 @@ import 'stream-chat-react/dist/css/v2/index.css';
 import './ModernChat.css';
 
 // Tu API Key de Stream
-const API_KEY = process.env.REACT_APP_STREAM_API_KEY || '7met7m5hgkb8ui';
+const API_KEY = '7met7m5hgkb8ui';;
 const chatClient = StreamChat.getInstance(API_KEY);
 
 const ChatApp = () => {
