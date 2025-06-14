@@ -64,6 +64,9 @@ const ChatApp = () => {
       const generalChannel = chatClient.channel('messaging', 'general', {
         name: 'Chat General - Fortuna',
         members: [user.username],
+        permissions: {
+          '*': ['read', 'write', 'create'],
+        },
       });
 
       await generalChannel.create();
