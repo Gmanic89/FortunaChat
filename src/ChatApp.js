@@ -600,15 +600,21 @@ const ChatApp = () => {
                         // Múltiples patrones para extraer el nombre
                         let userName = null;
                         
-                        // Patrón 1: "Chat con X"
+                        // Patrón 1: "Chat con X" (más específico)
                         let match = channelText.match(/Chat con (\w+)/i);
-                        if (match) userName = match[1];
+                        if (match) {
+                          userName = match[1];
+                          console.log('🎯 Usuario extraído con patrón "Chat con":', userName);
+                        }
                         
-                        // Patrón 2: Solo el nombre (si no hay "Chat con")
+                        // Si no se encontró, usar el aria-label que es más limpio
                         if (!userName) {
-                          const words = channelText.trim().split(/\s+/).filter(w => w.length > 0);
-                          if (words.length > 0) {
-                            userName = words[words.length - 1]; // Último palabra
+                          const ariaLabel = channelItem.getAttribute('aria-label') || '';
+                          console.log('🏷️ Aria-label:', ariaLabel);
+                          match = ariaLabel.match(/Select Channel: Chat con (\w+)/i);
+                          if (match) {
+                            userName = match[1];
+                            console.log('🎯 Usuario extraído con aria-label:', userName);
                           }
                         }
                         
