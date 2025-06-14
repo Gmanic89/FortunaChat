@@ -21,7 +21,7 @@ const API_KEY = '7met7m5hgkb8';
 const chatClient = StreamChat.getInstance(API_KEY);
 
 // Define tu username de admin aquí
-const ADMIN_USERNAME = 'test1'; // ← CAMBIA ESTO POR TU USERNAME DE ADMIN
+const ADMIN_USERNAME = 'admin'; // ← CAMBIA ESTO POR TU USERNAME DE ADMIN
 
 const ChatApp = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -130,8 +130,13 @@ const ChatApp = () => {
       const channelId = `private-${ADMIN_USERNAME}-${username}`;
       const privateChannel = chatClient.channel('messaging', channelId);
       await privateChannel.watch();
+      
+      // Cambiar al tab de chats y establecer el canal activo
+      setAdminView('chat');
       setSelectedUserChat(privateChannel);
       setChannel(privateChannel);
+      
+      console.log(`✅ Chat abierto con ${username}`);
     } catch (error) {
       console.error('Error abriendo chat privado:', error);
     }
@@ -576,6 +581,10 @@ const ChatApp = () => {
                     }}
                     sort={{ last_message_at: -1 }}
                     options={{ limit: 10 }}
+                    onChannelSelect={(channel) => {
+                      setChannel(channel);
+                      setSelectedUserChat(channel);
+                    }}
                   />
                 )}
               </div>
