@@ -601,21 +601,19 @@ const ChatApp = () => {
                         Chats Activos
                       </h3>
                     )}
-                    <Chat client={chatClient} theme="str-chat__theme-light">
-                      <ChannelList 
-                        filters={{ 
-                          type: 'messaging', 
-                          members: { $in: [currentUser.username] } 
-                        }}
-                        sort={{ last_message_at: -1 }}
-                        options={{ limit: 10 }}
-                        onSelect={(selectedChannel) => {
-                          console.log('✅ Canal seleccionado:', selectedChannel);
-                          setChannel(selectedChannel);
-                          setSelectedUserChat(selectedChannel);
-                        }}
-                      />
-                    </Chat>
+                    <ChannelList 
+                      filters={{ 
+                        type: 'messaging', 
+                        members: { $in: [currentUser.username] } 
+                      }}
+                      sort={{ last_message_at: -1 }}
+                      options={{ limit: 10 }}
+                      onSelect={(selectedChannel) => {
+                        console.log('✅ Cambiando a canal:', selectedChannel.id);
+                        setChannel(selectedChannel);
+                        setSelectedUserChat(selectedChannel);
+                      }}
+                    />
                   </div>
                 )}
               </div>
@@ -638,7 +636,7 @@ const ChatApp = () => {
 
             {/* Área de chat principal */}
             <div style={{ flex: 1 }}>
-              <Channel channel={channel}>
+              <Channel channel={channel} key={channel?.id}>
                 <Window>
                   <ChannelHeader />
                   <MessageList />
