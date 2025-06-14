@@ -57,25 +57,51 @@ const ChatApp = () => {
   // Crear canal privado con admin
   const createPrivateChannelWithAdmin = async (newUsername) => {
     try {
+      // Verificar que el admin existe en Stream
+      if (!isAdmin && !users.find(u => u.username === ADMIN_USERNAME)) {
+        console.log('⚠️ Admin no encontrado, saltando creación de canal privado');
+        return null;
+      }
+      
       const channelId = `private-${ADMIN_USERNAME}-${newUsername}`;
       const privateChannel = chatClient.channel('messaging', channelId, {
         name: `Chat privado: ${newUsername}`,
-        members: [ADMIN_USERNAME, newUsername],
+        members: [newUsername], // Solo agregar el usuario nuevo por ahora
         created_by_id: newUsername,
       });
       
       await privateChannel.create();
       
-      // Enviar mensaje automático de bienvenida del admin
-      await privateChannel.sendMessage({
-        text: `¡Hola ${newUsername}! 👋 Bienvenido a FortunaChat. Soy el administrador y estoy aquí para ayudarte. ¿En qué puedo asistirte?`,
-        user_id: ADMIN_USERNAME,
-      });
+      // Solo enviar mensaje si el admin está registrado
+      const adminExists = users.find(u => u.username === ADMIN_USERNAME);
+      if (adminExists) {
+        // Agregar admin al canal después de crearlo
+        await privateChannel.addMembers([ADMIN_USERNAME]);
+        
+        // Enviar mensaje automático de bienvenida
+        await privateChannel.sendMessage({
+          text: `¡Hola ${newUsername}! 👋 Bienvenido a FortunaChat. Soy el administrador y estoy aquí para ayudarte. ¿En qué puedo asistirte?`,
+          user_id: ADMIN_USERNAME,
+        });
+      }
       
       console.log(`✅ Canal privado creado: ${channelId}`);
       return privateChannel;
     } catch (error) {
       console.error('Error creando canal privado:', error);
+      // Si falla, crear canal solo para el usuario
+      try {
+        const fallbackChannel = chatClient.channel('messaging', `user-${newUsername}`, {
+          name: `Chat de ${newUsername}`,
+          members: [newUsername],
+          created_by_id: newUsername,
+        });
+        await fallbackChannel.create();
+        return fallbackChannel;
+      } catch (fallbackError) {
+        console.error('Error en canal fallback:', fallbackError);
+        return null;
+      }
     }
   };
 
@@ -625,4 +651,4 @@ const ChatApp = () => {
   return null;
 };
 
-export default ChatApp;
+export default ChatApp; 
