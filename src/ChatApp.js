@@ -60,16 +60,10 @@ const ChatApp = () => {
         token
       );
 
-      // Crear o obtener el canal general
-      const generalChannel = chatClient.channel('team', 'general', {
-        name: 'Chat General - Fortuna',
-        members: [user.username],
-        permissions: {
-          '*': ['read', 'write', 'create'],
-        },
-      });
+      // Crear o obtener el canal general - SOLUCIÓN PARA PERMISOS
+      const generalChannel = chatClient.channel('livestream', 'general');
+      await generalChannel.watch();
 
-      await generalChannel.create();
       setChannel(generalChannel);
       setCurrentUser(user);
       setShowLogin(false);
@@ -413,7 +407,7 @@ const ChatApp = () => {
               
               <div style={{ flex: 1 }}>
                 <ChannelList 
-                  filters={{ type: 'messaging', members: { $in: [currentUser.username] } }}
+                  filters={{ type: 'livestream', members: { $in: [currentUser.username] } }}
                   sort={{ last_message_at: -1 }}
                   options={{ limit: 10 }}
                 />
