@@ -557,18 +557,53 @@ const ChatApp = () => {
                     </div>
                   </div>
                 ) : (
-                  <ChannelList 
-                    filters={{ 
-                      type: 'messaging', 
-                      members: { $in: [currentUser.username] } 
+                  <div 
+                    onClick={async (e) => {
+                      // Buscar el elemento del canal clickeado
+                      const channelItem = e.target.closest('[role="button"], .str-chat__channel-preview');
+                      if (channelItem) {
+                        console.log('🔥 Click detectado en canal');
+                        
+                        // Obtener todos los canales disponibles
+                        const channels = await chatClient.queryChannels(
+                          { type: 'messaging', members: { $in: [currentUser.username] } },
+                          { last_message_at: -1 }
+                        );
+                        
+                        console.log('📋 Canales disponibles:', channels.length);
+                        
+                        // Buscar el canal por el texto visible
+                        const channelText = channelItem.textContent;
+                        console.log('📝 Texto del canal clickeado:', channelText);
+                        
+                        // Buscar el canal que coincida
+                        const targetChannel = channels.find(ch => {
+                          const channelName = ch.data?.name || '';
+                          return channelName.includes(channelText.replace('Chat con ', '')) ||
+                                 channelText.includes(channelName);
+                        });
+                        
+                        if (targetChannel) {
+                          console.log('✅ Canal encontrado:', targetChannel.id);
+                          await targetChannel.watch();
+                          setChannel(targetChannel);
+                          console.log('🔄 Canal cambiado - ya puedes responder');
+                        } else {
+                          console.log('❌ No se encontró el canal correspondiente');
+                        }
+                      }
                     }}
-                    sort={{ last_message_at: -1 }}
-                    options={{ limit: 10 }}
-                    onSelect={(selectedChannel) => {
-                      console.log('🔥 Cambiando a chat:', selectedChannel.id);
-                      setChannel(selectedChannel);
-                    }}
-                  />
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <ChannelList 
+                      filters={{ 
+                        type: 'messaging', 
+                        members: { $in: [currentUser.username] } 
+                      }}
+                      sort={{ last_message_at: -1 }}
+                      options={{ limit: 10 }}
+                    />
+                  </div>
                 )}
               </div>
               
