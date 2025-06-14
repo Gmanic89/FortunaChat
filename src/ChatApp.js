@@ -11,7 +11,7 @@ import {
   Window,
   LoadingIndicator,
 } from 'stream-chat-react';
-import { MessageCircle, User, Lock, LogOut, UserPlus } from 'lucide-react';
+import { MessageCircle, User, Lock, LogOut, UserPlus, Crown, Users, MessageSquare } from 'lucide-react';
 
 import 'stream-chat-react/dist/css/v2/index.css';
 import './ModernChat.css';
@@ -19,6 +19,9 @@ import './ModernChat.css';
 // Tu API Key de Stream
 const API_KEY = '7met7m5hgkb8';
 const chatClient = StreamChat.getInstance(API_KEY);
+
+// Define tu username de admin aquí
+const ADMIN_USERNAME = 'test1'; // ← CAMBIA ESTO POR TU USERNAME DE ADMIN
 
 const ChatApp = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -30,6 +33,9 @@ const ChatApp = () => {
   const [registerData, setRegisterData] = useState({ username: '', password: '', confirmPassword: '' });
   const [isConnecting, setIsConnecting] = useState(false);
   const [channel, setChannel] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminView, setAdminView] = useState('chat'); // 'chat' | 'users'
+  const [selectedUserChat, setSelectedUserChat] = useState(null);
 
   // Cargar usuarios del localStorage
   useEffect(() => {
@@ -43,28 +49,69 @@ const ChatApp = () => {
     }
   }, []);
 
+  // Verificar si es admin
+  const checkIfAdmin = (username) => {
+    return username === ADMIN_USERNAME;
+  };
+
+  // Crear canal privado con admin
+  const createPrivateChannelWithAdmin = async (newUsername) => {
+    try {
+      const channelId = `private-${ADMIN_USERNAME}-${newUsername}`;
+      const privateChannel = chatClient.channel('messaging', channelId, {
+        name: `Chat privado: ${newUsername}`,
+        members: [ADMIN_USERNAME, newUsername],
+        created_by_id: newUsername,
+      });
+      
+      await privateChannel.create();
+      
+      // Enviar mensaje automático de bienvenida del admin
+      await privateChannel.sendMessage({
+        text: `¡Hola ${newUsername}! 👋 Bienvenido a FortunaChat. Soy el administrador y estoy aquí para ayudarte. ¿En qué puedo asistirte?`,
+        user_id: ADMIN_USERNAME,
+      });
+      
+      console.log(`✅ Canal privado creado: ${channelId}`);
+      return privateChannel;
+    } catch (error) {
+      console.error('Error creando canal privado:', error);
+    }
+  };
+
   // Conectar usuario a Stream Chat
   const connectUserToStream = async (user) => {
     try {
       setIsConnecting(true);
       
-      // Token de desarrollo (para producción necesitas backend)
       const token = chatClient.devToken(user.username);
+      const adminStatus = checkIfAdmin(user.username);
+      setIsAdmin(adminStatus);
       
       await chatClient.connectUser(
         {
           id: user.username,
           name: user.username,
           image: `https://ui-avatars.com/api/?name=${user.username}&background=6366f1&color=fff`,
+          role: adminStatus ? 'admin' : 'user',
         },
         token
       );
 
-      // Crear o obtener el canal general - SOLUCIÓN PARA PERMISOS
-      const generalChannel = chatClient.channel('livestream', 'general');
-      await generalChannel.watch();
+      // Para admin: conectar al canal general
+      // Para usuarios: crear canal privado con admin
+      let defaultChannel;
+      
+      if (adminStatus) {
+        // Admin ve el canal general
+        defaultChannel = chatClient.channel('livestream', 'general');
+        await defaultChannel.watch();
+      } else {
+        // Usuario nuevo: crear canal privado con admin
+        defaultChannel = await createPrivateChannelWithAdmin(user.username);
+      }
 
-      setChannel(generalChannel);
+      setChannel(defaultChannel);
       setCurrentUser(user);
       setShowLogin(false);
       setIsConnecting(false);
@@ -77,14 +124,30 @@ const ChatApp = () => {
     }
   };
 
+  // Abrir chat privado con usuario (solo para admin)
+  const openPrivateChatWithUser = async (username) => {
+    try {
+      const channelId = `private-${ADMIN_USERNAME}-${username}`;
+      const privateChannel = chatClient.channel('messaging', channelId);
+      await privateChannel.watch();
+      setSelectedUserChat(privateChannel);
+      setChannel(privateChannel);
+    } catch (error) {
+      console.error('Error abriendo chat privado:', error);
+    }
+  };
+
   // Desconectar usuario
   const disconnectUser = async () => {
     try {
       await chatClient.disconnectUser();
       setCurrentUser(null);
       setChannel(null);
+      setIsAdmin(false);
       setShowLogin(true);
       setShowChat(false);
+      setAdminView('chat');
+      setSelectedUserChat(null);
       localStorage.removeItem('fortunaCurrentUser');
     } catch (error) {
       console.error('Error desconectando:', error);
@@ -117,7 +180,8 @@ const ChatApp = () => {
       id: Date.now(),
       username: registerData.username,
       password: registerData.password,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isAdmin: checkIfAdmin(registerData.username)
     };
     
     const updatedUsers = [...users, newUser];
@@ -216,6 +280,11 @@ const ChatApp = () => {
                     minLength={3}
                   />
                 </div>
+                {registerData.username === ADMIN_USERNAME && (
+                  <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '0.25rem' }}>
+                    👑 Este usuario será administrador
+                  </div>
+                )}
               </div>
 
               <div className="modern-input-group">
@@ -329,12 +398,17 @@ const ChatApp = () => {
             </button>
           </div>
           <h2 className="modern-welcome-title">
-            ¡Hola, {currentUser.username}!
+            ¡Hola, {currentUser.username}! {isAdmin && '👑'}
           </h2>
-          <p className="modern-welcome-subtitle">Haz clic en el icono para abrir FortunaChat</p>
+          <p className="modern-welcome-subtitle">
+            {isAdmin 
+              ? 'Panel de administrador - Gestiona tu FortunaChat' 
+              : 'Haz clic en el icono para abrir tu chat privado'
+            }
+          </p>
           <div className="modern-status-indicator">
             <div className="modern-status-dot"></div>
-            Conectado a Stream Chat
+            {isAdmin ? 'Admin conectado' : 'Conectado a Stream Chat'}
           </div>
           <button
             onClick={disconnectUser}
@@ -348,13 +422,13 @@ const ChatApp = () => {
     );
   }
 
-  // Chat de Stream (AQUÍ ESTÁ EL CHAT REAL)
+  // Chat de Stream
   if (showChat && channel) {
     return (
       <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <Chat client={chatClient} theme="str-chat__theme-light">
           <div style={{ display: 'flex', height: '100vh' }}>
-            {/* Lista de canales (sidebar) */}
+            {/* Sidebar */}
             <div style={{ 
               width: '320px', 
               background: 'white', 
@@ -362,6 +436,7 @@ const ChatApp = () => {
               display: 'flex',
               flexDirection: 'column'
             }}>
+              {/* Header */}
               <div style={{ 
                 padding: '1rem 1.5rem', 
                 borderBottom: '1px solid #e5e7eb',
@@ -377,23 +452,21 @@ const ChatApp = () => {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  FortunaChat
+                  FortunaChat {isAdmin && '👑'}
                 </h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => setShowChat(false)}
-                    style={{
-                      padding: '0.5rem',
-                      border: 'none',
-                      background: 'transparent',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      color: '#6b7280'
-                    }}
-                  >
-                    <MessageCircle style={{ width: '1.25rem', height: '1.25rem' }} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowChat(false)}
+                  style={{
+                    padding: '0.5rem',
+                    border: 'none',
+                    background: 'transparent',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    color: '#6b7280'
+                  }}
+                >
+                  <MessageCircle style={{ width: '1.25rem', height: '1.25rem' }} />
+                </button>
               </div>
               
               <div style={{ 
@@ -402,15 +475,109 @@ const ChatApp = () => {
                 color: '#6b7280',
                 borderBottom: '1px solid #f3f4f6'
               }}>
-                Conectado como: <strong>{currentUser.username}</strong>
+                {isAdmin ? '👑 Administrador' : 'Usuario'}: <strong>{currentUser.username}</strong>
               </div>
               
-              <div style={{ flex: 1 }}>
-                <ChannelList 
-                  filters={{ type: 'livestream', members: { $in: [currentUser.username] } }}
-                  sort={{ last_message_at: -1 }}
-                  options={{ limit: 10 }}
-                />
+              {/* Admin Controls */}
+              {isAdmin && (
+                <div style={{ 
+                  padding: '1rem', 
+                  borderBottom: '1px solid #f3f4f6',
+                  display: 'flex',
+                  gap: '0.5rem'
+                }}>
+                  <button
+                    onClick={() => setAdminView('chat')}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      background: adminView === 'chat' ? '#6366f1' : '#f3f4f6',
+                      color: adminView === 'chat' ? 'white' : '#6b7280',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <MessageSquare style={{ width: '1rem', height: '1rem', display: 'inline', marginRight: '0.25rem' }} />
+                    Chats
+                  </button>
+                  <button
+                    onClick={() => setAdminView('users')}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      background: adminView === 'users' ? '#6366f1' : '#f3f4f6',
+                      color: adminView === 'users' ? 'white' : '#6b7280',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <Users style={{ width: '1rem', height: '1rem', display: 'inline', marginRight: '0.25rem' }} />
+                    Usuarios
+                  </button>
+                </div>
+              )}
+              
+              {/* Content Area */}
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                {isAdmin && adminView === 'users' ? (
+                  // Lista de usuarios para admin
+                  <div style={{ padding: '1rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
+                      Usuarios Registrados ({users.filter(u => !checkIfAdmin(u.username)).length})
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {users.filter(u => !checkIfAdmin(u.username)).map(user => (
+                        <button
+                          key={user.id}
+                          onClick={() => openPrivateChatWithUser(user.username)}
+                          style={{
+                            padding: '0.75rem',
+                            borderRadius: '0.5rem',
+                            border: '1px solid #e5e7eb',
+                            background: 'white',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <img
+                              src={`https://ui-avatars.com/api/?name=${user.username}&background=6366f1&color=fff&size=32`}
+                              alt={user.username}
+                              style={{ width: '2rem', height: '2rem', borderRadius: '50%' }}
+                            />
+                            <div>
+                              <div style={{ fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
+                                {user.username}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                {new Date(user.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  // Lista de canales normal
+                  <ChannelList 
+                    filters={{ 
+                      type: isAdmin ? 'messaging' : 'messaging', 
+                      members: { $in: [currentUser.username] } 
+                    }}
+                    sort={{ last_message_at: -1 }}
+                    options={{ limit: 10 }}
+                  />
+                )}
               </div>
               
               <div style={{ 
@@ -429,7 +596,7 @@ const ChatApp = () => {
               </div>
             </div>
 
-            {/* Área de chat principal - AQUÍ VES STREAM CHAT REAL */}
+            {/* Área de chat principal */}
             <div style={{ flex: 1 }}>
               <Channel channel={channel}>
                 <Window>
