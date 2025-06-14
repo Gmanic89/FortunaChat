@@ -61,7 +61,7 @@ const ChatApp = () => {
       );
 
       // Crear o obtener el canal general
-      const generalChannel = chatClient.channel('messaging', 'general', {
+      const generalChannel = chatClient.channel('team', 'general', {
         name: 'Chat General - Fortuna',
         members: [user.username],
         permissions: {
