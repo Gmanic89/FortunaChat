@@ -564,6 +564,10 @@ const ChatApp = () => {
                     }}
                     sort={{ last_message_at: -1 }}
                     options={{ limit: 10 }}
+                    onSelect={(selectedChannel) => {
+                      console.log('🔥 Cambiando a chat:', selectedChannel.id);
+                      setChannel(selectedChannel);
+                    }}
                   />
                 )}
               </div>
