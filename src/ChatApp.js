@@ -594,20 +594,29 @@ const ChatApp = () => {
                     </div>
                   </div>
                 ) : (
-                  // Lista de canales normal
-                  <ChannelList 
-                    filters={{ 
-                      type: 'messaging', 
-                      members: { $in: [currentUser.username] } 
-                    }}
-                    sort={{ last_message_at: -1 }}
-                    options={{ limit: 10 }}
-                    onSelect={(channel) => {
-                      console.log('Canal seleccionado:', channel);
-                      setChannel(channel);
-                      setSelectedUserChat(channel);
-                    }}
-                  />
+                  // Lista de canales normal - SIN USAR CHANNELLIST
+                  <div style={{ padding: '1rem' }}>
+                    {isAdmin && (
+                      <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '1rem' }}>
+                        Chats Activos
+                      </h3>
+                    )}
+                    <Chat client={chatClient} theme="str-chat__theme-light">
+                      <ChannelList 
+                        filters={{ 
+                          type: 'messaging', 
+                          members: { $in: [currentUser.username] } 
+                        }}
+                        sort={{ last_message_at: -1 }}
+                        options={{ limit: 10 }}
+                        onSelect={(selectedChannel) => {
+                          console.log('✅ Canal seleccionado:', selectedChannel);
+                          setChannel(selectedChannel);
+                          setSelectedUserChat(selectedChannel);
+                        }}
+                      />
+                    </Chat>
+                  </div>
                 )}
               </div>
               
