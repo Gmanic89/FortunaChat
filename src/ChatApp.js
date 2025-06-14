@@ -153,6 +153,7 @@ const ChatApp = () => {
       if (adminStatus) {
         // Admin: NO establecer canal por defecto, se seleccionará desde ChannelList
         console.log('👑 Admin conectado, esperando selección de chat');
+        defaultChannel = null; // Explícitamente null para admin
       } else {
         // Usuario: SIEMPRE chat privado con admin
         defaultChannel = await createPrivateChannelWithAdmin(user.username);
@@ -171,6 +172,11 @@ const ChatApp = () => {
       setCurrentUser(user);
       setShowLogin(false);
       setIsConnecting(false);
+      
+      // Para admin, cargar canales después de conectar
+      if (adminStatus) {
+        setTimeout(() => loadAdminChannels(), 1000);
+      }
       
       console.log('✅ Conectado a Stream Chat exitosamente');
     } catch (error) {
@@ -336,6 +342,7 @@ const ChatApp = () => {
               Powered by Stream Chat
             </div>
           </div>
+
           {isRegistering ? (
             <div className="modern-form">
               <div className="modern-input-group">
