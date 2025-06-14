@@ -105,14 +105,15 @@ const SimpleUserChat = ({
         display: 'flex',
         flexDirection: 'column',
         minHeight: isMobile
-            ? 'calc(100vh - 420px)' // Más espacio para mensajes sugeridos
-            : 'calc(100vh - 380px)'
+            ? 'calc(100vh - 320px)' // Más espacio sin mensaje de bienvenida
+            : 'calc(100vh - 280px)'
     };
 
     const messageListStyle = {
         flex: 1,
-        overflow: 'hidden',
-        minHeight: isMobile ? '150px' : '250px', // Reducido para dar espacio a sugerencias
+        overflow: 'auto', // Cambio a auto para scroll independiente
+        minHeight: isMobile ? '200px' : '300px', // Más altura para mensajes
+        maxHeight: isMobile ? 'calc(100vh - 320px)' : 'calc(100vh - 280px)', // Altura máxima
         paddingBottom: isMobile ? '0.5rem' : '0.25rem'
     };
 
@@ -120,7 +121,10 @@ const SimpleUserChat = ({
         borderTop: '1px solid #e5e7eb',
         background: 'white',
         paddingBottom: isMobile ? '1rem' : '0.5rem',
-        paddingTop: '0.5rem'
+        paddingTop: '0.5rem',
+        position: 'sticky', // Hacer que siempre esté visible
+        bottom: 0,
+        zIndex: 10
     };
 
     // Botón SINOCA moderno
@@ -337,42 +341,16 @@ const SimpleUserChat = ({
                         </button>
                     </div>
 
-                    {/* Mensaje de bienvenida */}
-                    <div style={{
-                        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-                        background: '#f8fafc',
-                        borderBottom: '1px solid #e5e7eb'
-                    }}>
-                        <div style={{
-                            background: 'white',
-                            padding: isMobile ? '0.75rem' : '1rem',
-                            borderRadius: '0.75rem',
-                            border: '1px solid #e5e7eb',
-                            fontSize: isMobile ? '0.8rem' : '0.875rem',
-                            color: '#6b7280',
-                            textAlign: 'center'
-                        }}>
-                            <MessageCircle style={{
-                                width: isMobile ? '1.25rem' : '1.5rem',
-                                height: isMobile ? '1.25rem' : '1.5rem',
-                                margin: '0 auto 0.5rem',
-                                color: '#6366f1'
-                            }} />
-                            <p style={{ margin: 0, lineHeight: '1.4' }}>
-                                Este es tu chat privado con el administrador.
-                                {!isMobile && <><br />Puedes escribir cualquier pregunta o comentario.</>}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Área de chat SIN SIDEBAR */}
+                    {/* Área de chat SIN SIDEBAR - Optimizada */}
                     <div style={chatAreaStyle}>
                         <Channel channel={channel}>
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                height: '100%'
+                                height: '100%',
+                                position: 'relative'
                             }}>
+                                {/* Lista de mensajes con scroll independiente */}
                                 <div style={messageListStyle}>
                                     <MessageList />
                                 </div>
@@ -453,6 +431,7 @@ const SimpleUserChat = ({
                                     </div>
                                 </div>
 
+                                {/* Input de mensaje - Siempre visible */}
                                 <div style={inputContainerStyle}>
                                     <MessageInput
                                         placeholder={`Escribe tu mensaje para ${STREAM_CONFIG.ADMIN_USERNAME}...`}
