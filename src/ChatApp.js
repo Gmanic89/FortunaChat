@@ -559,38 +559,116 @@ const ChatApp = () => {
                 ) : (
                   <div 
                     onClick={async (e) => {
-                      // Buscar el elemento del canal clickeado
-                      const channelItem = e.target.closest('[role="button"], .str-chat__channel-preview');
-                      if (channelItem) {
-                        console.log('🔥 Click detectado en canal');
+                      console.log('🔥 Click detectado - iniciando búsqueda...');
+                      
+                      try {
+                        // Múltiples selectores para encontrar el elemento clickeado
+                        const channelItem = e.target.closest('[role="button"]') || 
+                                          e.target.closest('.str-chat__channel-preview') ||
+                                          e.target.closest('[class*="channel"]') ||
+                                          e.target.closest('div[style*="cursor"]') ||
+                                          e.target;
                         
-                        // Obtener todos los canales disponibles
-                        const channels = await chatClient.queryChannels(
-                          { type: 'messaging', members: { $in: [currentUser.username] } },
-                          { last_message_at: -1 }
-                        );
+                        if (!channelItem) {
+                          console.log('❌ No se pudo encontrar elemento del canal');
+                          return;
+                        }
                         
-                        console.log('📋 Canales disponibles:', channels.length);
+                        console.log('📍 Elemento encontrado:', channelItem);
                         
-                        // Buscar el canal por el texto visible
-                        const channelText = channelItem.textContent;
-                        console.log('📝 Texto del canal clickeado:', channelText);
+                        // Obtener todos los canales disponibles CON TIMEOUT
+                        console.log('🔍 Obteniendo canales...');
+                        const channels = await Promise.race([
+                          chatClient.queryChannels(
+                            { type: 'messaging', members: { $in: [currentUser.username] } },
+                            { last_message_at: -1 },
+                            { limit: 20 }
+                          ),
+                          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                        ]);
                         
-                        // Buscar el canal que coincida
-                        const targetChannel = channels.find(ch => {
-                          const channelName = ch.data?.name || '';
-                          return channelName.includes(channelText.replace('Chat con ', '')) ||
-                                 channelText.includes(channelName);
-                        });
+                        console.log('📋 Canales obtenidos:', channels.length);
+                        
+                        // Buscar texto en todo el elemento y sus hijos
+                        const getText = (element) => {
+                          return element.textContent || element.innerText || '';
+                        };
+                        
+                        const channelText = getText(channelItem);
+                        console.log('📝 Texto completo del canal:', channelText);
+                        
+                        // Múltiples patrones para extraer el nombre
+                        let userName = null;
+                        
+                        // Patrón 1: "Chat con X"
+                        let match = channelText.match(/Chat con (\w+)/i);
+                        if (match) userName = match[1];
+                        
+                        // Patrón 2: Solo el nombre (si no hay "Chat con")
+                        if (!userName) {
+                          const words = channelText.trim().split(/\s+/).filter(w => w.length > 0);
+                          if (words.length > 0) {
+                            userName = words[words.length - 1]; // Último palabra
+                          }
+                        }
+                        
+                        console.log('👤 Usuario extraído:', userName);
+                        
+                        if (!userName) {
+                          console.log('❌ No se pudo extraer nombre de usuario');
+                          return;
+                        }
+                        
+                        // Buscar canal por múltiples criterios
+                        let targetChannel = null;
+                        
+                        // Método 1: Por ID exacto
+                        const expectedId = `private-${ADMIN_USERNAME}-${userName}`;
+                        targetChannel = channels.find(ch => ch.id === expectedId);
+                        
+                        // Método 2: Por nombre de canal
+                        if (!targetChannel) {
+                          targetChannel = channels.find(ch => {
+                            const name = ch.data?.name || '';
+                            return name.toLowerCase().includes(userName.toLowerCase());
+                          });
+                        }
+                        
+                        // Método 3: Por miembros
+                        if (!targetChannel) {
+                          targetChannel = channels.find(ch => {
+                            const members = Object.keys(ch.state.members || {});
+                            return members.includes(userName) && members.includes(ADMIN_USERNAME);
+                          });
+                        }
+                        
+                        // Método 4: Por último mensaje del usuario
+                        if (!targetChannel) {
+                          targetChannel = channels.find(ch => {
+                            const lastMessage = ch.state.messages[ch.state.messages.length - 1];
+                            return lastMessage && lastMessage.user?.id === userName;
+                          });
+                        }
                         
                         if (targetChannel) {
                           console.log('✅ Canal encontrado:', targetChannel.id);
+                          console.log('🔄 Cambiando canal...');
+                          
                           await targetChannel.watch();
                           setChannel(targetChannel);
-                          console.log('🔄 Canal cambiado - ya puedes responder');
+                          
+                          console.log('🎉 Canal cambiado exitosamente');
                         } else {
-                          console.log('❌ No se encontró el canal correspondiente');
+                          console.log('❌ Canal no encontrado después de todos los métodos');
+                          console.log('🔍 Canales disponibles:', channels.map(ch => ({
+                            id: ch.id,
+                            name: ch.data?.name,
+                            members: Object.keys(ch.state.members || {})
+                          })));
                         }
+                        
+                      } catch (error) {
+                        console.error('💥 Error completo:', error);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
