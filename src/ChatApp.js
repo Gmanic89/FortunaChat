@@ -49,7 +49,7 @@ const ChatApp = () => {
       setIsConnecting(true);
       
       // Token de desarrollo (para producción necesitas backend)
-      const token = chatClient.devToken(user.username);
+      const token = chatClient.createToken(user.username);
       
       await chatClient.connectUser(
         {
