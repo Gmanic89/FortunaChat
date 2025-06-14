@@ -336,7 +336,6 @@ const ChatApp = () => {
               Powered by Stream Chat
             </div>
           </div>
-
           {isRegistering ? (
             <div className="modern-form">
               <div className="modern-input-group">
