@@ -104,8 +104,21 @@ const ChatApp = () => {
   };
 
   // Handlers de chat
-  const handleOpenChat = () => {
+  const handleOpenChat = async () => {
     console.log('💬 Abriendo chat');
+    
+    // Si no hay canal pero hay usuario, conectar primero
+    if (currentUser && !channel && !isConnecting) {
+      console.log('🔄 No hay canal, conectando usuario primero');
+      try {
+        await connectUser(currentUser);
+        console.log('✅ Usuario conectado, ahora abriendo chat');
+      } catch (error) {
+        console.error('❌ Error conectando usuario:', error);
+        return;
+      }
+    }
+    
     setShowChat(true);
   };
   
@@ -114,19 +127,45 @@ const ChatApp = () => {
     setShowChat(false);
   };
 
-  const handleChannelSelect = async (userName) => {
+  const handleChannelSelect = async (channelOrUserName) => {
+    console.log('🎯 handleChannelSelect en ChatApp ejecutado');
+    console.log('📥 Recibido:', channelOrUserName);
+    console.log('📥 Tipo:', typeof channelOrUserName);
+    
     try {
-      console.log('📞 Seleccionando canal para:', userName);
-      const targetChannel = await findChannelForUser(userName);
+      // Si recibimos un objeto canal directamente (desde ChannelList)
+      if (channelOrUserName && typeof channelOrUserName === 'object' && channelOrUserName.id) {
+        console.log('📞 Canal recibido directamente:', channelOrUserName.id);
+        console.log('🔧 switchChannel function exists:', !!switchChannel);
+        
+        if (switchChannel) {
+          console.log('🔄 Llamando a switchChannel...');
+          await switchChannel(channelOrUserName);
+          console.log('✅ switchChannel completado');
+        } else {
+          console.error('❌ switchChannel no está definido');
+        }
+        return;
+      }
+      
+      // Si recibimos un string (nombre de usuario) - búsqueda de canal
+      if (typeof channelOrUserName === 'string') {
+        console.log('📞 Seleccionando canal para usuario:', channelOrUserName);
+        console.log('🔧 findChannelForUser function exists:', !!findChannelForUser);
+        
+        const targetChannel = await findChannelForUser(channelOrUserName);
+        console.log('🎯 Canal encontrado:', targetChannel?.id);
 
-      if (targetChannel) {
-        await switchChannel(targetChannel);
-        console.log('✅ Canal cambiado exitosamente');
-      } else {
-        console.warn('⚠️ Canal no encontrado para', userName);
+        if (targetChannel && switchChannel) {
+          await switchChannel(targetChannel);
+          console.log('✅ Canal cambiado exitosamente');
+        } else {
+          console.warn('⚠️ Canal no encontrado para', channelOrUserName);
+        }
       }
     } catch (error) {
       console.error('❌ Error cambiando canal:', error);
+      console.error('❌ Error completo:', error.stack);
     }
   };
 
@@ -149,7 +188,7 @@ const ChatApp = () => {
   }
 
   // Mostrar chat
-  if (showChat && channel) {
+  if (showChat && (channel || (isAuthenticated && currentUser))) {
     console.log('💬 Mostrando ChatWindow');
     return (
       <ChatWindow

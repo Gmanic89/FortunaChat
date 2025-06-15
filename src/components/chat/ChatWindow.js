@@ -1,6 +1,6 @@
 // components/chat/ChatWindow.js
 import React from 'react';
-import { Chat, Channel, ChannelHeader, MessageList, MessageInput, Thread, Window } from 'stream-chat-react';
+import { Chat, Channel, ChannelHeader, MessageList, MessageInput, Thread, Window, ChannelList } from 'stream-chat-react';
 import Sidebar from './Sidebar';
 import SimpleUserChat from './SimpleUserChat';
 
@@ -16,7 +16,16 @@ const ChatWindow = ({
     onLogout,
     onChannelSelect
 }) => {
-    if (!channel) {
+    console.log('🏠 ChatWindow renderizado con:', {
+        hasClient: !!chatClient,
+        hasChannel: !!channel,
+        channelId: channel?.id,
+        currentUser: currentUser?.username,
+        isAdmin
+    });
+
+    // ❌ SOLO bloquear para usuarios normales sin canal
+    if (!channel && !isAdmin) {
         return (
             <div style={{
                 minHeight: '100vh',
@@ -43,24 +52,37 @@ const ChatWindow = ({
         );
     }
 
-    // Si es admin, mostrar vista completa con sidebar
+    // ✅ Si es admin, mostrar vista completa con sidebar (CON O SIN canal)
     return (
-        <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-            <Chat client={chatClient} theme="str-chat__theme-light">
+        <Chat client={chatClient} theme="str-chat__theme-light">
+            <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
                 <div style={{ display: 'flex', height: '100vh' }}>
-                    <Sidebar
-                        currentUser={currentUser}
-                        isAdmin={isAdmin}
-                        adminView={adminView}
-                        users={users}
-                        onAdminViewChange={onAdminViewChange}
-                        onCloseChat={onCloseChat}
-                        onLogout={onLogout}
-                        onChannelSelect={onChannelSelect}
+                    {/* ChannelList maneja su propio estado y actualiza automáticamente el canal activo */}
+                    <ChannelList
+                        filters={{
+                            type: 'messaging',
+                            members: { $in: [currentUser.username] }
+                        }}
+                        sort={{ last_message_at: -1 }}
+                        options={{ limit: 10 }}
+                        List={(props) => (
+                            <Sidebar
+                                {...props}
+                                currentUser={currentUser}
+                                isAdmin={isAdmin}
+                                adminView={adminView}
+                                users={users}
+                                onAdminViewChange={onAdminViewChange}
+                                onCloseChat={onCloseChat}
+                                onLogout={onLogout}
+                                onChannelSelect={onChannelSelect}
+                            />
+                        )}
                     />
 
                     <div style={{ flex: 1 }}>
-                        <Channel channel={channel}>
+                        {/* Channel se actualiza automáticamente cuando se selecciona en ChannelList */}
+                        <Channel>
                             <Window>
                                 <ChannelHeader />
                                 <MessageList />
@@ -70,8 +92,8 @@ const ChatWindow = ({
                         </Channel>
                     </div>
                 </div>
-            </Chat>
-        </div>
+            </div>
+        </Chat>
     );
 };
 

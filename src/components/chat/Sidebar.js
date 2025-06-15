@@ -16,56 +16,7 @@ const Sidebar = ({
     onLogout,
     onChannelSelect
 }) => {
-    const handleChannelClick = async (event) => {
-        console.log('🔥 Click detectado - iniciando búsqueda...');
-
-        try {
-            const channelItem = event.target.closest('[role="button"]') ||
-                event.target.closest('.str-chat__channel-preview') ||
-                event.target.closest('[class*="channel"]') ||
-                event.target.closest('div[style*="cursor"]') ||
-                event.target;
-
-            if (!channelItem) {
-                console.log('❌ No se pudo encontrar elemento del canal');
-                return;
-            }
-
-            console.log('📍 Elemento encontrado:', channelItem);
-
-            // Extraer nombre de usuario del elemento
-            const getText = (element) => element.textContent || element.innerText || '';
-            const channelText = getText(channelItem);
-            console.log('📝 Texto completo del canal:', channelText);
-
-            let userName = null;
-
-            // Usar aria-label primero
-            const ariaLabel = channelItem.getAttribute('aria-label') || '';
-            console.log('🏷️ Aria-label:', ariaLabel);
-            let match = ariaLabel.match(/Select Channel: Chat con (\w+)/i);
-            if (match) {
-                userName = match[1];
-                console.log('🎯 Usuario extraído con aria-label:', userName);
-            }
-
-            // Fallback con regex
-            if (!userName) {
-                match = channelText.match(/Chat con (\w+?)(?:\s|$)/i);
-                if (match) {
-                    userName = match[1];
-                    console.log('🎯 Usuario extraído con patrón estricto:', userName);
-                }
-            }
-
-            if (userName && onChannelSelect) {
-                await onChannelSelect(userName);
-            }
-
-        } catch (error) {
-            console.error('💥 Error completo:', error);
-        }
-    };
+    console.log('🎨 Sidebar renderizado para:', currentUser?.username);
 
     return (
         <div style={{
@@ -131,7 +82,10 @@ const Sidebar = ({
                 {isAdmin && adminView === ADMIN_VIEWS.USERS ? (
                     <UserList users={users} />
                 ) : (
-                    <div onClick={handleChannelClick} style={{ cursor: 'pointer' }}>
+                    <div>
+                        {console.log('🎨 Renderizando ChannelList - Stream Chat manejará los clics directamente')}
+                        
+                        {/* ChannelList sin onSelect personalizado - Stream Chat maneja todo */}
                         <ChannelList
                             filters={{
                                 type: 'messaging',
