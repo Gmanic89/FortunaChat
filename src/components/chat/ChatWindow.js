@@ -68,13 +68,24 @@ const ChatWindow = ({
     // Si es usuario regular (no admin), mostrar vista simple
     if (!isAdmin) {
         return (
-            <SimpleUserChat
-                chatClient={chatClient}
-                channel={channel}
-                currentUser={currentUser}
-                onCloseChat={onCloseChat}
-                onLogout={onLogout}
-            />
+            <>
+                <SimpleUserChat
+                    chatClient={chatClient}
+                    channel={channel}
+                    currentUser={currentUser}
+                    onCloseChat={onCloseChat}
+                    onLogout={onLogout}
+                    onOpenWeb={handleOpenWeb}
+                />
+                
+                {/* Modal Web también para usuarios */}
+                <WebModal 
+                    isOpen={showWebModal}
+                    onClose={handleCloseWeb}
+                    url="https://caipiria.com"
+                    title="Caipiria - Plataforma Web"
+                />
+            </>
         );
     }
 

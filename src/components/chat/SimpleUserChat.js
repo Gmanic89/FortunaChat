@@ -9,7 +9,8 @@ const SimpleUserChat = ({
     channel,
     currentUser,
     onCloseChat,
-    onLogout
+    onLogout,
+    onOpenWeb  // ← Nueva prop
 }) => {
     const [isMobile, setIsMobile] = useState(false);
 
@@ -234,7 +235,23 @@ const SimpleUserChat = ({
                                 {!isMobile && 'Admin disponible'}
                                 {isMobile && 'Online'}
                             </div>
-
+                            <button
+                                onClick={onOpenWeb}
+                                style={{
+                                    padding: '0.5rem',
+                                    border: 'none',
+                                    background: '#10b981',
+                                    borderRadius: '0.5rem',
+                                    cursor: 'pointer',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                title="Abrir web"
+                            >
+                                <Globe style={{ width: '1rem', height: '1rem' }} />
+                            </button>
                             <button
                                 onClick={onLogout}
                                 style={{
